@@ -41,3 +41,6 @@ private-tests
 kiobridge-private-evaluation
 .build/
 .release-tmp/
+
+.CLAUDE/
+.claude/
