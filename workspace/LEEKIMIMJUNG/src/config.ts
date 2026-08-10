@@ -1,7 +1,7 @@
 /** 팀 설정. init 이 만든 participant.config.json 과 함께 쓰세요. */
 export const TEAM_CONFIG = {
-  teamId: "TEAM-001",
-  environmentId: "sandbox",
+  teamId: "LEEKIMIMJUNG",
+  environmentId: "hospital",
   /** 외부 API 는 없어도 기본 흐름이 동작해야 합니다. */
   externalApi: {
     enabled: false,

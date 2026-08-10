@@ -46,6 +46,19 @@ import { collectUserDecision } from "./frontend/collectUserDecision.ts"; // STEP
 /* ═══════════════════════════ 조립 ═══════════════════════════ */
 import { buildExecutionPlan } from "./backend/buildExecutionPlan.ts"; // // STEP 9
 
+/** progress/validate 도구가 각 STEP 함수를 찾을 수 있도록 다시 내보냅니다. */
+export {
+  collectProfile,
+  mapToCanonicalInput,
+  createSessionContext,
+  filterCandidates,
+  recommend,
+  explainRecommendation,
+  buildAlternatives,
+  collectUserDecision,
+  buildExecutionPlan,
+};
+
 /** 위 9단계를 순서대로 엮어 제출물을 만듭니다. 구현 전에는 STEP 1 에서 멈춥니다. */
 export async function buildSubmission(fixture: PublicFixture, teamId: string): Promise<ParticipantSubmission> {
   const raw = await collectProfile();
