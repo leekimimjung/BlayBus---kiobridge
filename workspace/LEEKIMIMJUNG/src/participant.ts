@@ -30,23 +30,21 @@ import type {
 } from "@kiobridge/participant-sdk";
 
 /* ═══════════════════════════ 1. 수집 ═══════════════════════════ */
-import { collectProfile } from "./frontend/collectProfile.ts";
-import { mapToCanonicalInput } from "./backend/mapToCanonicalInput.ts"
-import { createSessionContext } from "./backend/createSessionContext.ts";
+import { collectProfile } from "./frontend/collectProfile.ts"; // STEP 1
+import { mapToCanonicalInput } from "./backend/mapToCanonicalInput.ts" // STEP 2
+import { createSessionContext } from "./backend/createSessionContext.ts"; // STEP 3
 
 /* ═══════════════════════════ 2. 추천 ═══════════════════════════ */
-import { filterCandidates } from "./agent/filterCandidates.ts";
-import { recommend } from "./agent/recommend.ts";
-import { explainRecommendation } from "./agent/explainRecommendation.ts";
-import { buildAlternatives } from "./agent/buildAlternatives.ts";
+import { filterCandidates } from "./agent/filterCandidates.ts"; // STEP 4
+import { recommend } from "./agent/recommend.ts"; // STEP 5
+import { explainRecommendation } from "./agent/explainRecommendation.ts"; // STEP 6
+import { buildAlternatives } from "./agent/buildAlternatives.ts"; // STEP 7
 
 /* ═══════════════════════ 3. 승인과 실행계획 ═══════════════════════ */
-import { collectUserDecision } from "./frontend/collectUserDecision.ts";
-
-
+import { collectUserDecision } from "./frontend/collectUserDecision.ts"; // STEP 8
 
 /* ═══════════════════════════ 조립 ═══════════════════════════ */
-import { buildExecutionPlan } from "./backend/buildExecutionPlan.ts";
+import { buildExecutionPlan } from "./backend/buildExecutionPlan.ts"; // // STEP 9
 
 /** 위 9단계를 순서대로 엮어 제출물을 만듭니다. 구현 전에는 STEP 1 에서 멈춥니다. */
 export async function buildSubmission(fixture: PublicFixture, teamId: string): Promise<ParticipantSubmission> {

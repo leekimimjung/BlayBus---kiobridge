@@ -42,11 +42,8 @@
 // STEP 2
 
 import type {
-  AnySessionContext, UserProfile,
+  UserProfile,
 } from "@kiobridge/participant-sdk";
-
-/** 환경마다 스키마가 다르므로 도메인별 SessionContext 를 합집합으로 다룹니다. */
-type SessionContext = AnySessionContext;
 
 /** 참가팀 서비스가 수집한 원본 입력 (형식 자유 — 웹폼/음성/QR/챗봇 무엇이든). */
 export type RawUserInput = Record<string, unknown>;
