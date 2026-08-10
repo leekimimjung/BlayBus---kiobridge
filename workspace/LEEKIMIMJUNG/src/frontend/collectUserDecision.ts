@@ -42,6 +42,7 @@ const todo = (fn: string, what: string): never => {
 // 빠른 요약
 // 뭘: 승인 화면
 // 어떻게: 수락/거절/다른후보/다시입력 버튼, 클릭 결과 반환
+// 참고 문서: docs/SAFETY_POLICY.md, docs/ERROR_CATALOG.md
 export async function collectUserDecision(_rec: Recommendation): Promise<UserDecision> {
   return todo("collectUserDecision", "사용자 승인/거절 수집");
 }

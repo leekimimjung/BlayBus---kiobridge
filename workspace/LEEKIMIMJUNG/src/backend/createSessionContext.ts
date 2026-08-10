@@ -60,6 +60,7 @@ const todo = (fn: string, what: string): never => {
 // 빠른 요약
 // 뭘: 이번 방문 맥락 구성
 // 어떻게: facts/preferences/hardConstraints/capabilities 4칸에 값 나눠 넣기 (섞으면 안 됨)
+// 참고 문서: docs/MAPPING_GUIDE.md, docs/SESSION_CONTEXT_DICTIONARY.md, docs/UNKNOWN_POLICY.md, docs/ENUM_REFERENCE.md
 export function createSessionContext(_raw: RawUserInput, _fixture: PublicFixture): SessionContext {
   return todo("createSessionContext", "세션 맥락(intent/facts/preferences/hardConstraints) 구성");
 }

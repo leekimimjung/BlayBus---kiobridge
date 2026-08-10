@@ -50,6 +50,7 @@ const todo = (fn: string, what: string): never => {
 // 빠른 요약
 // 뭘: 추천 이유 문장 만들기
 // 어떻게: "왜 이걸 골랐는지" 최소 1문장, 사용한 조건 언급 ("AI가 추천" 같은 문구 금지)
+// 참고 문서: docs/EXPLAINABLE_RECOMMENDATION_GUIDE.md
 export function explainRecommendation(_rec: Recommendation, _ctx: SessionContext): string[] {
   return todo("explainRecommendation", "추천 이유 설명 생성");
 }

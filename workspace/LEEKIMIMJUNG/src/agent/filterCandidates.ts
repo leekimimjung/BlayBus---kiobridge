@@ -51,6 +51,7 @@ const todo = (fn: string, what: string): never => {
 // 빠른 요약
 // 뭘: 조건 위반 후보 제거
 // 어떻게: candidates.filter()로 available=false, hardConstraint 위반 후보 걸러내기
+// 참고 문서: docs/environments/HOSPITAL_PARTICIPANT_GUIDE.md, docs/UNKNOWN_POLICY.md, docs/ERROR_CATALOG.md
 export function filterCandidates(_candidates: Candidate[], _ctx: SessionContext): Candidate[] {
   return todo("filterCandidates", "hardConstraint 위반 후보 제외");
 }

@@ -59,6 +59,7 @@ const todo = (fn: string, what: string): never => {
 // 빠른 요약
 // 뭘: 입력값 → 공식 UserProfile 변환
 // 어떻게: 받은 값 그대로 정해진 필드에 옮겨 담기. language:"ko-KR", collectedAt은 nowIso8601Utc()
+// 참고 문서: docs/MAPPING_GUIDE.md, docs/PROFILE_DATA_DICTIONARY.md, docs/ENUM_REFERENCE.md, docs/ERROR_CATALOG.md
 export function mapToCanonicalInput(_raw: RawUserInput): UserProfile {
   return todo("mapToCanonicalInput", "원본 입력 → Canonical Profile 변환");
 }
