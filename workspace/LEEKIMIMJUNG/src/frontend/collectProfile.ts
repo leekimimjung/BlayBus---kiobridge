@@ -43,6 +43,9 @@ const todo = (fn: string, what: string): never => {
 };
 
 
+// 빠른 요약
+// 뭘: 사용자 정보 입력 화면
+// 어떻게: 폼/버튼으로 접근성·방문유형·진료과 등 입력받고 객체로 반환. 로그인 없이도 동작
 export async function collectProfile(): Promise<RawUserInput> {
   return todo("collectProfile", "사용자 정보 수집 채널 구현");
 }

@@ -37,6 +37,9 @@ throw new Error(
 );
 };
 
+// 빠른 요약
+// 뭘: 대안 후보 뽑기
+// 어떻게: recommend에서 뺀 2~3순위 후보 ID만 배열로 반환 (제외된 후보는 다시 살리지 않기)
 export function buildAlternatives(_candidates: Candidate[], _rec: Recommendation): string[] {
   return todo("buildAlternatives", "대안 후보 목록 구성");
 }

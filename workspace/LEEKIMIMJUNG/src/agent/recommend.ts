@@ -50,6 +50,9 @@ const todo = (fn: string, what: string): never => {
   );
 };
 
+// 빠른 요약
+// 뭘: 남은 후보 순위 매기기
+// 어떻게: facts 일치 여부로 점수 매겨 정렬, 1등 뽑기. 확신 낮으면 재확인 플래그
 export function recommend(_candidates: Candidate[], _ctx: SessionContext, _profile: UserProfile): Recommendation {
   return todo("recommend", "후보 순위 결정 및 1순위 추천");
 }

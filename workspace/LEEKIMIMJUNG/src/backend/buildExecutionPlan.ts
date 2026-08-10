@@ -53,6 +53,9 @@ const todo = (fn: string, what: string): never => {
   );
 };
 
+// 빠른 요약
+// 뭘: 실행계획 만들기
+// 어떻게: fixture.transitions 순서대로 액션 나열, 마지막에 verify_checkin
 export function buildExecutionPlan(_decision: UserDecision, _rec: Recommendation, _fixture: PublicFixture): ExecutionPlan {
   return todo("buildExecutionPlan", "의미 기반 실행계획 생성 (경계 전 정지 + verifier)");
 }
