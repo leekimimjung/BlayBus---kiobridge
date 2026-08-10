@@ -62,5 +62,115 @@ const todo = (fn: string, what: string): never => {
 // 어떻게: facts/preferences/hardConstraints/capabilities 4칸에 값 나눠 넣기 (섞으면 안 됨)
 // 참고 문서: docs/MAPPING_GUIDE.md, docs/SESSION_CONTEXT_DICTIONARY.md, docs/UNKNOWN_POLICY.md, docs/ENUM_REFERENCE.md
 export function createSessionContext(_raw: RawUserInput, _fixture: PublicFixture): SessionContext {
-  return todo("createSessionContext", "세션 맥락(intent/facts/preferences/hardConstraints) 구성");
+  const visitTypeStr = String(_raw.visitType ?? "").toUpperCase();
+  const visitType =
+    /FIRST/.test(visitTypeStr) ? "FIRST_VISIT" :
+    /RE.?VISIT/.test(visitTypeStr) ? "REVISIT" :
+    /SCREEN/.test(visitTypeStr) ? "HEALTH_SCREENING" :
+    /EXAM/.test(visitTypeStr) ? "EXAM" :
+    "UNKNOWN";
+
+  const appointmentStr = String(_raw.appointmentStatus ?? "").toUpperCase();
+  const appointmentStatus =
+    /HAS|YES/.test(appointmentStr) ? "HAS_APPOINTMENT" :
+    /NO/.test(appointmentStr) ? "NO_APPOINTMENT" :
+    "UNKNOWN";
+
+  const deptStr = String(_raw.departmentId ?? "").toUpperCase();
+  const departmentId =
+    /INTERNAL/.test(deptStr) ? "INTERNAL_MEDICINE" :
+    /ORTHO/.test(deptStr) ? "ORTHOPEDICS" :
+    /ENT/.test(deptStr) ? "ENT" :
+    /RADIO/.test(deptStr) ? "RADIOLOGY" :
+    /SCREEN/.test(deptStr) ? "HEALTH_SCREENING" :
+    "UNSPECIFIED";
+
+  const guardianPresent = typeof _raw.guardianPresent === "boolean" ? _raw.guardianPresent : false;
+
+  const supportModesRaw = _raw.supportModes;
+  const supportModesItems = supportModesRaw == null ? [] :
+    Array.isArray(supportModesRaw) ? supportModesRaw : [supportModesRaw];
+  const supportModesSet = new Set<string>();
+  for (const item of supportModesItems) {
+    const s = String(item).toUpperCase();
+    if (/LARGE/.test(s)) supportModesSet.add("LARGE_TEXT");
+    if (/HEARING/.test(s)) supportModesSet.add("HEARING_SUPPORT");
+    if (/VISUAL/.test(s)) supportModesSet.add("VISUAL_GUIDANCE");
+    if (/SIMPLE/.test(s)) supportModesSet.add("SIMPLE_STEPS");
+    if (/STAFF/.test(s)) supportModesSet.add("STAFF_HELP");
+    if (/GUARDIAN/.test(s)) supportModesSet.add("GUARDIAN_MODE");
+  }
+  const supportModes = [...supportModesSet];
+
+  const canUseSelfCheckIn = typeof _raw.canUseSelfCheckIn === "boolean" ? _raw.canUseSelfCheckIn : true;
+
+  return {
+    intent: {
+      task: "CHECK_IN",
+    },
+    facts: {
+      visitType,
+      appointmentStatus,
+      departmentId,
+      guardianPresent,
+    },
+    preferences: {
+      supportModes,
+    },
+    hardConstraints: {
+      medicalInferenceAllowed: false,
+    },
+    capabilities: {
+      canUseSelfCheckIn,
+    },
+    fieldMetadata: {
+      "/facts/visitType": {
+        source: "WEB_FORM",
+        confidence: 0.8,
+        confirmedByUser: true,
+        capturedAt: nowIso8601Utc(),
+      },
+      "/facts/appointmentStatus": {
+        source: "WEB_FORM",
+        confidence: 0.85,
+        confirmedByUser: true,
+        capturedAt: nowIso8601Utc(),
+      },
+      "/facts/departmentId": {
+        source: "WEB_FORM",
+        confidence: 0.75,
+        confirmedByUser: true,
+        capturedAt: nowIso8601Utc(),
+      },
+      "/facts/guardianPresent": {
+        source: "WEB_FORM",
+        confidence: 0.9,
+        confirmedByUser: true,
+        capturedAt: nowIso8601Utc(),
+      },
+      "/preferences/supportModes": {
+        source: "WEB_FORM",
+        confidence: 0.8,
+        confirmedByUser: true,
+        capturedAt: nowIso8601Utc(),
+      },
+      "/hardConstraints/medicalInferenceAllowed": {
+        source: "DEFAULTED",
+        confidence: 1,
+        confirmedByUser: true,
+        capturedAt: nowIso8601Utc(),
+      },
+      "/capabilities/canUseSelfCheckIn": {
+        source: "WEB_FORM",
+        confidence: 0.85,
+        confirmedByUser: true,
+        capturedAt: nowIso8601Utc(),
+      },
+    },
+    extensions: {},
+  } as SessionContext;
+}
+
+function nowIso8601Utc(): string {
+  return new Date().toISOString();
 }
