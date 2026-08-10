@@ -1,0 +1,54 @@
+{
+  "_scenario": "무릎통증 학생 — 초진, 예약없음 → 진료과는 사용자가 직접 선택 (자동매칭 금지)",
+  "_expectedRecommendedCandidateId": "HOS-003",
+  "_note": "이 시나리오의 핵심은 '무릎통증'이라는 증상 정보가 이 JSON 어디에도 존재하지 않는다는 것입니다. departmentId는 UNSPECIFIED(Department 타입엔 UNKNOWN이 없음) — 사용자가 진료과를 직접 말하기 전까지 정형외과 등으로 절대 자동매칭하지 않습니다 (병원 환경 금지 규칙). recommend()는 이 경우 일반 안내 경로(HOS-003)로 보내고 requiresReconfirmation=true 로 재확인을 요구해야 합니다.",
+  "inputContractVersion": "1.0.0",
+  "environmentId": "hospital",
+  "teamId": "LEEKIMIMJUNG",
+  "profile": {
+    "profileId": "SCENARIO-04-PROFILE",
+    "dataClassification": "SYNTHETIC_PROFILE",
+    "source": {
+      "collectionChannel": "WEB_FORM",
+      "providerId": "LEEKIMIMJUNG",
+      "collectedAt": "2026-08-10T00:00:00Z"
+    },
+    "accessibility": {
+      "largeText": false,
+      "simpleSteps": false,
+      "visualGuidance": false,
+      "hearingSupport": false,
+      "mobilitySupport": false,
+      "highContrast": false,
+      "staffAssistancePreferred": false
+    },
+    "interaction": {
+      "preferredInput": "TOUCH",
+      "language": "ko-KR",
+      "confirmationRequired": true
+    },
+    "consent": {
+      "personalization": true,
+      "retentionPolicy": "SESSION_ONLY"
+    }
+  },
+  "sessionContext": {
+    "intent": { "task": "CHECK_IN" },
+    "facts": {
+      "visitType": "FIRST_VISIT",
+      "appointmentStatus": "NO_APPOINTMENT",
+      "departmentId": "UNSPECIFIED",
+      "guardianPresent": true
+    },
+    "preferences": {
+      "supportModes": []
+    },
+    "hardConstraints": {
+      "medicalInferenceAllowed": false
+    },
+    "capabilities": {
+      "canUseSelfCheckIn": true
+    },
+    "fieldMetadata": {}
+  }
+}

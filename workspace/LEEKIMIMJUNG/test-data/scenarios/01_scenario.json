@@ -1,0 +1,56 @@
+{
+  "_scenario": "시각장애 아동 — 초진, 예약없음, 음성안내, 보호자없음 → 안전장치(직원호출) 필수",
+  "_expectedRecommendedCandidateId": "HOS-006",
+  "_note": "보호자 없이 혼자 온 것으로 감지되면 recommend()가 범용 직원도움 경로(HOS-006)에 안전 가산점을 줘야 함. requiresReconfirmation=true 여야 함 (진료과 미확인). Department 타입엔 UNKNOWN이 없어서 미확인은 UNSPECIFIED로 표기, 저신뢰 음성입력이라는 건 fieldMetadata로 표현.",
+  "inputContractVersion": "1.0.0",
+  "environmentId": "hospital",
+  "teamId": "LEEKIMIMJUNG",
+  "profile": {
+    "profileId": "SCENARIO-01-PROFILE",
+    "dataClassification": "SYNTHETIC_PROFILE",
+    "source": {
+      "collectionChannel": "VOICE",
+      "providerId": "LEEKIMIMJUNG",
+      "collectedAt": "2026-08-10T00:00:00Z"
+    },
+    "accessibility": {
+      "largeText": false,
+      "simpleSteps": true,
+      "visualGuidance": false,
+      "hearingSupport": false,
+      "mobilitySupport": false,
+      "highContrast": false,
+      "staffAssistancePreferred": true
+    },
+    "interaction": {
+      "preferredInput": "VOICE",
+      "language": "ko-KR",
+      "confirmationRequired": true
+    },
+    "consent": {
+      "personalization": true,
+      "retentionPolicy": "SESSION_ONLY"
+    }
+  },
+  "sessionContext": {
+    "intent": { "task": "CHECK_IN" },
+    "facts": {
+      "visitType": "FIRST_VISIT",
+      "appointmentStatus": "NO_APPOINTMENT",
+      "departmentId": "UNSPECIFIED",
+      "guardianPresent": false
+    },
+    "preferences": {
+      "supportModes": ["STAFF_HELP"]
+    },
+    "hardConstraints": {
+      "medicalInferenceAllowed": false
+    },
+    "capabilities": {
+      "canUseSelfCheckIn": false
+    },
+    "fieldMetadata": {
+      "/facts/departmentId": { "source": "VOICE", "confidence": 0.3, "confirmedByUser": false }
+    }
+  }
+}

@@ -1,0 +1,54 @@
+{
+  "_scenario": "재진 고령자 — 재진, 예약있음, 큰글씨 → 완료 후 세션 리셋",
+  "_expectedRecommendedCandidateId": "HOS-001",
+  "_note": "재진+예약이 있는 경우는 진료과를 이미 알고 있는 경우가 현실적이므로 departmentId를 명확히 채움 (INTERNAL_MEDICINE). '완료 후 세션 리셋'은 프론트엔드 UX 요구사항이라 이 데이터에는 반영되지 않음.",
+  "inputContractVersion": "1.0.0",
+  "environmentId": "hospital",
+  "teamId": "LEEKIMIMJUNG",
+  "profile": {
+    "profileId": "SCENARIO-03-PROFILE",
+    "dataClassification": "SYNTHETIC_PROFILE",
+    "source": {
+      "collectionChannel": "WEB_FORM",
+      "providerId": "LEEKIMIMJUNG",
+      "collectedAt": "2026-08-10T00:00:00Z"
+    },
+    "accessibility": {
+      "largeText": true,
+      "simpleSteps": true,
+      "visualGuidance": false,
+      "hearingSupport": false,
+      "mobilitySupport": false,
+      "highContrast": false,
+      "staffAssistancePreferred": false
+    },
+    "interaction": {
+      "preferredInput": "TOUCH",
+      "language": "ko-KR",
+      "confirmationRequired": true
+    },
+    "consent": {
+      "personalization": true,
+      "retentionPolicy": "SESSION_ONLY"
+    }
+  },
+  "sessionContext": {
+    "intent": { "task": "CHECK_IN" },
+    "facts": {
+      "visitType": "REVISIT",
+      "appointmentStatus": "HAS_APPOINTMENT",
+      "departmentId": "INTERNAL_MEDICINE",
+      "guardianPresent": false
+    },
+    "preferences": {
+      "supportModes": ["LARGE_TEXT"]
+    },
+    "hardConstraints": {
+      "medicalInferenceAllowed": false
+    },
+    "capabilities": {
+      "canUseSelfCheckIn": true
+    },
+    "fieldMetadata": {}
+  }
+}

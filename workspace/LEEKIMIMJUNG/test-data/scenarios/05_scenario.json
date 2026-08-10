@@ -1,0 +1,61 @@
+{
+  "_scenario": "(자유 창의) 공황장애 환자 — 재진, 천천히 진행 모드 → 화면전환 느리게 + 단계별 재확인 문구 + 조용한 대기공간 안내",
+  "_expectedRecommendedCandidateId": "HOS-001",
+  "_note": "'천천히 진행 모드'는 공식 SupportMode enum에 없는 팀 자체 확장 개념이라 sessionContext.extensions.LEEKIMIMJUNG.* 네임스페이스에 넣었습니다 (Core 계약은 건드리지 않음). 화면전환 속도·조용한 대기공간 안내는 프론트엔드 UX가 이 extensions 값을 읽어서 처리해야 합니다.",
+  "inputContractVersion": "1.0.0",
+  "environmentId": "hospital",
+  "teamId": "LEEKIMIMJUNG",
+  "profile": {
+    "profileId": "SCENARIO-05-PROFILE",
+    "dataClassification": "SYNTHETIC_PROFILE",
+    "source": {
+      "collectionChannel": "WEB_FORM",
+      "providerId": "LEEKIMIMJUNG",
+      "collectedAt": "2026-08-10T00:00:00Z"
+    },
+    "accessibility": {
+      "largeText": false,
+      "simpleSteps": true,
+      "visualGuidance": false,
+      "hearingSupport": false,
+      "mobilitySupport": false,
+      "highContrast": false,
+      "staffAssistancePreferred": false
+    },
+    "interaction": {
+      "preferredInput": "TOUCH",
+      "language": "ko-KR",
+      "confirmationRequired": true
+    },
+    "consent": {
+      "personalization": true,
+      "retentionPolicy": "SESSION_ONLY"
+    }
+  },
+  "sessionContext": {
+    "intent": { "task": "CHECK_IN" },
+    "facts": {
+      "visitType": "REVISIT",
+      "appointmentStatus": "HAS_APPOINTMENT",
+      "departmentId": "INTERNAL_MEDICINE",
+      "guardianPresent": false
+    },
+    "preferences": {
+      "supportModes": ["SIMPLE_STEPS"]
+    },
+    "hardConstraints": {
+      "medicalInferenceAllowed": false
+    },
+    "capabilities": {
+      "canUseSelfCheckIn": true
+    },
+    "fieldMetadata": {},
+    "extensions": {
+      "LEEKIMIMJUNG.uxPreferences": {
+        "slowTransitions": true,
+        "stepByStepReconfirmation": true,
+        "quietWaitingAreaGuidance": true
+      }
+    }
+  }
+}

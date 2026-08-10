@@ -39,10 +39,43 @@ const todo = (fn: string, what: string): never => {
   );
 };
 
+// ══════════════════════════════════════════════════════════════
+// 컴포넌트 함수 틀 (조은빛, 여윤우) — 프레임워크 자유. 뼈대만 있고 안은 비어있음.
+// ══════════════════════════════════════════════════════════════
+
+/** 추천 결과 + 추천 이유(recommendationReasons) 표시 화면 */
+async function renderRecommendationScreen(_rec: Recommendation): Promise<void> {
+  // TODO: 조은빛/여윤우 구현 — rec.recommendedCandidateId, rec.recommendationReasons 표시
+  throw new Error("NOT_IMPLEMENTED: renderRecommendationScreen");
+}
+
+/** 대안 후보(rec.alternativeCandidateIds) "다른 것 보기" 화면 */
+async function renderAlternativesScreen(_rec: Recommendation): Promise<{ selectedCandidateId: string }> {
+  // TODO: 조은빛/여윤우 구현
+  throw new Error("NOT_IMPLEMENTED: renderAlternativesScreen");
+}
+
+/** 최종 확인 버튼 4종 — 수락 / 거절 / 다른 후보 선택 / 다시 입력 */
+async function renderApprovalButtons(): Promise<"APPROVE" | "REJECT" | "PICK_ALTERNATIVE" | "RESTART"> {
+  // TODO: 조은빛/여윤우 구현
+  throw new Error("NOT_IMPLEMENTED: renderApprovalButtons");
+}
+
+/** 버튼 클릭 결과를 UserDecision 객체로 조립 */
+function buildUserDecision(approved: boolean, decision: string): UserDecision {
+  // TODO: 조은빛/여윤우 구현 — confirmedAt은 UTC Z 형식으로
+  return { approved, decision, confirmedAt: new Date().toISOString() } as UserDecision;
+}
+
 // 빠른 요약
 // 뭘: 승인 화면
-// 어떻게: 수락/거절/다른후보/다시입력 버튼, 클릭 결과 반환
+// 어떻게: 위 컴포넌트 함수들로 추천+이유 보여주고, 버튼 클릭 결과를 UserDecision으로 반환
 // 참고 문서: docs/SAFETY_POLICY.md, docs/ERROR_CATALOG.md
 export async function collectUserDecision(_rec: Recommendation): Promise<UserDecision> {
+  // TODO: 아래 순서대로 컴포넌트 함수 호출해서 조립하면 됩니다.
+  // await renderRecommendationScreen(_rec);
+  // const choice = await renderApprovalButtons();
+  // if (choice === "PICK_ALTERNATIVE") { await renderAlternativesScreen(_rec); }
+  // return buildUserDecision(choice === "APPROVE", choice);
   return todo("collectUserDecision", "사용자 승인/거절 수집");
 }
