@@ -45,6 +45,8 @@ import type {
   UserProfile,
 } from "@kiobridge/participant-sdk";
 
+import { nowIso8601Utc } from "@kiobridge/participant-sdk";
+
 /** 참가팀 서비스가 수집한 원본 입력 (형식 자유 — 웹폼/음성/QR/챗봇 무엇이든). */
 export type RawUserInput = Record<string, unknown>;
 
@@ -66,9 +68,9 @@ function toPreferredInput(v: unknown) {
   return "TOUCH";
 }
 
-function nowIso8601Utc(): string {
-  return new Date().toISOString();
-}
+// function nowIso8601Utc(): string {
+//   return new Date().toISOString();
+// }
 
 // 빠른 요약
 // 뭘: 입력값 → 공식 UserProfile 변환
