@@ -55,11 +55,51 @@ const todo = (fn: string, what: string): never => {
   );
 };
 
+const asBoolean = (v: unknown): boolean => v === true;
+
+function toPreferredInput(v: unknown) {
+  if (v === "VOICE") return "VOICE";
+  if (v === "KEYBOARD") return "KEYBOARD";
+  if (v === "SWITCH") return "SWITCH";
+  if (v === "ASSISTED") return "ASSISTED";
+  if (v === "MULTIMODAL") return "MULTIMODAL";
+  return "TOUCH";
+}
+
+function nowIso8601Utc(): string {
+  return new Date().toISOString();
+}
 
 // 빠른 요약
 // 뭘: 입력값 → 공식 UserProfile 변환
 // 어떻게: 받은 값 그대로 정해진 필드에 옮겨 담기. language:"ko-KR", collectedAt은 nowIso8601Utc()
 // 참고 문서: docs/MAPPING_GUIDE.md, docs/PROFILE_DATA_DICTIONARY.md, docs/ENUM_REFERENCE.md, docs/ERROR_CATALOG.md
 export function mapToCanonicalInput(_raw: RawUserInput): UserProfile {
-  return todo("mapToCanonicalInput", "원본 입력 → Canonical Profile 변환");
+  return {
+    profileId: `LEEKIMIMJUNG-${Date.now().toString(36)}`,
+    dataClassification: "SYNTHETIC_PROFILE",
+    source: {
+      collectionChannel: "WEB_FORM",
+      providerId: "LEEKIMIMJUNG",
+      collectedAt: nowIso8601Utc(),
+    },
+    accessibility: {
+      largeText:                asBoolean(_raw.largeText),
+      simpleSteps:              asBoolean(_raw.simpleSteps),
+      visualGuidance:           asBoolean(_raw.visualGuidance),
+      hearingSupport:           asBoolean(_raw.hearingSupport),
+      mobilitySupport:          asBoolean(_raw.mobilitySupport),
+      highContrast:             asBoolean(_raw.highContrast),
+      staffAssistancePreferred: asBoolean(_raw.staffAssistancePreferred),
+    },
+    interaction: {
+      preferredInput: toPreferredInput(_raw.preferredInput),
+      language: "ko-KR",
+      confirmationRequired: true,
+    },
+    consent: {
+      personalization: asBoolean(_raw.personalization),
+      retentionPolicy: "SESSION_ONLY",
+    },
+  };
 }
