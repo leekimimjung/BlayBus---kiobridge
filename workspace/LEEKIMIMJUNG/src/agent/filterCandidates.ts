@@ -48,9 +48,44 @@ const todo = (fn: string, what: string): never => {
   );
 };
 
+// [0단계] 백엔드 팀 완성을 기다리지 않고 테스트하기 위한 Mock 세션 컨텍스트
+const mockSessionContext: SessionContext = {
+  visitType: "FIRST_VISIT",
+  appointment: "NO_APPOINTMENT",
+  department: "UNSPECIFIED" // 🚨 주의: 증상으로 진료과를 임의 추론하는 로직 금지!
+} as any;
+
+// 제외 사유를 기록하기 위한 저장소 (나중에 설명 문구에 활용)
+export const exclusionReasons = new Map<string, string>();
+
+/**
+ * Hard Constraint 위반 여부를 검사하는 함수
+ */
+function violatesHardConstraints(candidate: Candidate, ctx: SessionContext): boolean {
+  // TODO: 절대 규칙 위반 시 true 반환
+  return false; 
+}
+
 // 빠른 요약
 // 뭘: 조건 위반 후보 제거
 // 어떻게: candidates.filter()로 available=false, hardConstraint 위반 후보 걸러내기
-export function filterCandidates(_candidates: Candidate[], _ctx: SessionContext): Candidate[] {
-  return todo("filterCandidates", "hardConstraint 위반 후보 제외");
+export function filterCandidates(candidates: Candidate[], ctx: SessionContext = mockSessionContext): Candidate[] {
+  exclusionReasons.clear();
+
+  // 의사코드 반영 및 available, hardConstraints 검사
+  return candidates.filter((c) => {
+    // 1. available === false 인 후보는 완전히 제외 (CANDIDATE_UNAVAILABLE)
+    if (c.available === false) {
+      exclusionReasons.set((c as any).id, "CANDIDATE_UNAVAILABLE");
+      return false;
+    }
+
+    // 2. Hard Constraint 위반 후보 완전 제거 (감점 아님)
+    if (violatesHardConstraints(c, ctx)) {
+      exclusionReasons.set((c as any).id, "HARD_CONSTRAINT_VIOLATED");
+      return false;
+    }
+
+    return true;
+  });
 }
