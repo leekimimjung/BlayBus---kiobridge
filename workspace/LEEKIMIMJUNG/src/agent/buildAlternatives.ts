@@ -26,6 +26,7 @@
 import type {
     Candidate, Recommendation
 } from "@kiobridge/participant-sdk";
+import { exclusionReasons } from "./filterCandidates.ts";
 
 /** 참가팀 서비스가 수집한 원본 입력 (형식 자유 — 웹폼/음성/QR/챗봇 무엇이든). */
 export type RawUserInput = Record<string, unknown>;
@@ -42,5 +43,25 @@ throw new Error(
 // 어떻게: recommend에서 뺀 2~3순위 후보 ID만 배열로 반환 (제외된 후보는 다시 살리지 않기)
 // 참고 문서: docs/environments/HOSPITAL_PARTICIPANT_GUIDE.md, docs/ERROR_CATALOG.md
 export function buildAlternatives(_candidates: Candidate[], _rec: Recommendation): string[] {
-  return todo("buildAlternatives", "대안 후보 목록 구성");
+  const alternativeIds: string[] = [];
+
+  for (const candidate of _candidates) {
+    if (!candidate) continue;
+
+    if (candidate.candidateId === _rec.recommendedCandidateId) {
+      continue;
+    }
+
+    if (exclusionReasons.has(candidate.candidateId)) {
+      continue;
+    }
+
+    if (candidate.available === false) {
+      continue;
+    }
+
+    alternativeIds.push(candidate.candidateId);
+  }
+
+  return alternativeIds.slice(0, 2);
 }
