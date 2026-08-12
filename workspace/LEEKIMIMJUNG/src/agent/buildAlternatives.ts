@@ -45,16 +45,14 @@ throw new Error(
 export function buildAlternatives(_candidates: Candidate[], _rec: Recommendation): string[] {
   const alternativeIds: string[] = [];
 
-  for (const item of _candidates) {
-    const candidate = item as any;
+  for (const candidate of _candidates) {
     if (!candidate) continue;
 
-    const recObj = _rec as any;
-    if (candidate.id === recObj.selectedCandidateId || candidate.id === recObj.id) {
+    if (candidate.candidateId === _rec.recommendedCandidateId) {
       continue;
     }
 
-    if (exclusionReasons.has(candidate.id)) {
+    if (exclusionReasons.has(candidate.candidateId)) {
       continue;
     }
 
@@ -62,7 +60,7 @@ export function buildAlternatives(_candidates: Candidate[], _rec: Recommendation
       continue;
     }
 
-    alternativeIds.push(candidate.id);
+    alternativeIds.push(candidate.candidateId);
   }
 
   return alternativeIds.slice(0, 2);
