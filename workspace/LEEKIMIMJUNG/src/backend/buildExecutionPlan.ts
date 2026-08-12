@@ -1,11 +1,3 @@
-/**
- * STEP 9 — buildExecutionPlan
- *
- * 핵심 수정:
- *   1. candidateId 필드명 수정 (c.id → c.candidateId) ✅
- *   2. optionGroupId 매칭 제거 → GROUP_ID_TO_ACTION 매핑으로 변경 ✅
- *   3. 일반 진행 경로의 target을 { kind: "option", groupId, id } 형태로 변경 ✅
- */
 import type {
   ExecutionPlan, PublicFixture, Recommendation, UserDecision,
 } from "@kiobridge/participant-sdk";
@@ -26,7 +18,6 @@ const FORBIDDEN_ACTIONS = new Set<string>([
   "verify_identity_complete",
 ]);
 
-/** 🔴 FIX #2: optionGroupId 대신 groupId → action 직접 매핑 */
 const GROUP_ID_TO_ACTION: Record<string, string> = {
   "VISIT_TYPE": "select_visit_type",
   "APPOINTMENT": "check_appointment",
@@ -60,7 +51,6 @@ export function buildExecutionPlan(
     return emptyPlan as ExecutionPlan;
   }
 
-  // 🔴 FIX #1: c.id → c.candidateId
   const candidate = candidates.find((c: any) => c && c.candidateId === recommendedCandidateId);
   if (!candidate) {
     return emptyPlan as ExecutionPlan;
@@ -80,15 +70,14 @@ export function buildExecutionPlan(
   let actionIndex = 0;
   let currentState: string = manifest.initialState ?? "";
 
-  // 아직 채우지 않은 옵션 그룹에 해당하는 transition 찾기
   const findNextGroupTransition = (filledGroups: Set<string>) => {
     for (const groupId of Object.keys(resolvedOptionValues)) {
       if (filledGroups.has(groupId)) continue;
 
-      const group = optionGroups.find((g: any) => g && g.id === groupId);
+      // 🔴 FIX #4: g.id → g.groupId
+      const group = optionGroups.find((g: any) => g && g.groupId === groupId);
       if (!group) continue;
 
-      // 🔴 FIX #2: optionGroupId 제거, GROUP_ID_TO_ACTION로 action 찾기
       const expectedAction = GROUP_ID_TO_ACTION[groupId];
       if (!expectedAction) continue;
 
@@ -119,9 +108,10 @@ export function buildExecutionPlan(
   };
 
   const filledGroups = new Set<string>();
+  // 🔴 FIX #4: g.id → g.groupId (2곳)
   const requiredGroupIds = optionGroups
-    .filter((g: any) => g && g.required && Object.prototype.hasOwnProperty.call(supportedOptions, g.id))
-    .map((g: any) => g.id);
+    .filter((g: any) => g && g.required && Object.prototype.hasOwnProperty.call(supportedOptions, g.groupId))
+    .map((g: any) => g.groupId);
 
   const reviewBoundaryState: string = manifest.reviewBoundaryState ?? "";
   let safetyCounter = 0;
@@ -135,7 +125,6 @@ export function buildExecutionPlan(
       const { transition, groupId } = groupMatch;
       const chosenValue = resolvedOptionValues[groupId];
 
-      // 🔴 FIX #3: target에 실제 선택값 포함 ({ kind: "option", groupId, id })
       const ok = pushAction(
         transition.action,
         { kind: "option", groupId, id: chosenValue },
@@ -149,19 +138,26 @@ export function buildExecutionPlan(
       continue;
     }
 
-    // 2) 일반 진행 transition
+    // 2) 일반 진행 transition (option 그룹 관련 액션 제외)
     const generalTransition = transitions.find(
-      (t: any) => t && t.from === currentState && !t.optionGroupId && !Object.values(GROUP_ID_TO_ACTION).includes(t.action ?? ""),
+      (t: any) => t && 
+                  t.from === currentState && 
+                  !t.optionGroupId && 
+                  !Object.values(GROUP_ID_TO_ACTION).includes(t.action ?? ""),
     );
 
     if (!generalTransition) {
       break;
     }
 
-    // 🔴 FIX #3: 일반 진행도 실제 선택값이 있으면 option 형태로
+    // 🔴 FIX #5: select_flow는 { kind: "candidate", id } 형태로
+    const target = generalTransition.action === "select_flow"
+      ? { kind: "candidate", id: recommendedCandidateId }
+      : { kind: "screen", id: generalTransition.to };
+
     const ok = pushAction(
       generalTransition.action,
-      { kind: "screen", id: generalTransition.to },
+      target,
       generalTransition.to,
     );
 
