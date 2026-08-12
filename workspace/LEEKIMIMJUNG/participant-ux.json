@@ -1,7 +1,7 @@
 {
   "anonymousStartSupported": true,
   "loginRequired": false,
-  "optionalLoginSupported": false,
+  "optionalLoginSupported": true,
   "localProfileStorage": "OPTIONAL",
   "deleteStoredProfileSupported": true,
   "oneTimeUseSupported": true,

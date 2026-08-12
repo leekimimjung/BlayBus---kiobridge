@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#f5f8fa" />
+    <title>collectProfile 데모 — 은빛 병원</title>
+    <link rel="stylesheet" href="./style.css" />
+    <style>
+      .demo-result { display: grid; gap: 10px; margin-top: 22px; }
+      .demo-row {
+        padding: 13px 14px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+        border: 1px solid #dce3e7;
+        border-radius: 7px;
+        background: #fff;
+      }
+      .demo-label { color: #7a858e; font-size: 0.6875rem; font-weight: 700; }
+      .demo-value { font-size: 0.8125rem; font-weight: 700; text-align: right; }
+    </style>
+  </head>
+  <body>
+    <main id="app" class="app-shell" aria-live="polite"></main>
+    <script type="module" src="./collectProfile-demo.js"></script>
+  </body>
+</html>
