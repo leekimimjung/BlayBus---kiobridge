@@ -24,6 +24,11 @@
  *   docs/SESSION_CONTEXT_DICTIONARY.md              SessionContext 필드 사전
  *   docs/UNKNOWN_POLICY.md                          모르는 값을 추론하지 않는 규칙
  *   examples/annotated/                             주석 달린 예제 (제출 불가)
+ *
+ * 전체 공통 (STEP 상관없이 한 번쯤 보면 좋음)
+ *   docs/PASS_SCOPE.md              뭘 하면 PASS 인지 범위
+ *   docs/WHAT_YOU_BUILD.md          우리가 만드는 것 vs 플랫폼이 만드는 것
+ *   docs/QUICK_START_10_MINUTES.md  10분 요약
  */
 import type {
   ParticipantSubmission, PublicFixture

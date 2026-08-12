@@ -30,11 +30,34 @@
  *   npm run participant:progress
  */
 import type {
-  AnySessionContext, Recommendation
+  AnySessionContext, HospitalSessionContext, Recommendation
 } from "@kiobridge/participant-sdk";
+// 주의: @kiobridge/participant-sdk 에서 "값"을 import 하면 Node 24 기본 실행기(strip-only 모드)가
+// 이 패키지의 KioBridgeApiError 클래스(parameter property 문법)를 못 읽어 에러가 납니다.
+// (packages/ 는 플랫폼 파일이라 못 고침 — 그래서 여기선 리터럴 문자열로 대체합니다.)
 
 /** 환경마다 스키마가 다르므로 도메인별 SessionContext 를 합집합으로 다룹니다. */
 type SessionContext = AnySessionContext;
+
+const VISIT_TYPE_LABEL: Record<string, string> = {
+  FIRST_VISIT: "초진",
+  REVISIT: "재진",
+  HEALTH_SCREENING: "건강검진",
+  EXAM: "검사",
+};
+
+const APPOINTMENT_LABEL: Record<string, string> = {
+  HAS_APPOINTMENT: "예약이 있는",
+  NO_APPOINTMENT: "예약이 없는",
+};
+
+const DEPARTMENT_LABEL: Record<string, string> = {
+  INTERNAL_MEDICINE: "내과",
+  ORTHOPEDICS: "정형외과",
+  ENT: "이비인후과",
+  RADIOLOGY: "영상의학과",
+  HEALTH_SCREENING: "건강검진센터",
+};
 
 /** 참가팀 서비스가 수집한 원본 입력 (형식 자유 — 웹폼/음성/QR/챗봇 무엇이든). */
 export type RawUserInput = Record<string, unknown>;
@@ -50,6 +73,42 @@ const todo = (fn: string, what: string): never => {
 // 빠른 요약
 // 뭘: 추천 이유 문장 만들기
 // 어떻게: "왜 이걸 골랐는지" 최소 1문장, 사용한 조건 언급 ("AI가 추천" 같은 문구 금지)
+// 참고 문서: docs/EXPLAINABLE_RECOMMENDATION_GUIDE.md
 export function explainRecommendation(_rec: Recommendation, _ctx: SessionContext): string[] {
-  return todo("explainRecommendation", "추천 이유 설명 생성");
+  const ctx = _ctx as HospitalSessionContext;
+  const facts = ctx.facts ?? {};
+  const reasons: string[] = [];
+
+  if (!_rec.recommendedCandidateId) {
+    reasons.push("입력하신 조건에 정확히 맞는 접수 경로를 찾지 못해, 직원 도움을 통한 안내를 권해드립니다.");
+    return reasons;
+  }
+
+  const visitLabel = VISIT_TYPE_LABEL[facts.visitType ?? ""];
+  const apptLabel = APPOINTMENT_LABEL[facts.appointmentStatus ?? ""];
+  if (visitLabel && apptLabel) {
+    reasons.push(`${visitLabel}이시고 ${apptLabel} 상태에 맞는 접수 경로로 안내해 드렸습니다.`);
+  }
+
+  const departmentWasUnclear = !facts.departmentId || facts.departmentId === "UNSPECIFIED";
+
+  const departmentLabel = facts.departmentId ? DEPARTMENT_LABEL[facts.departmentId] : undefined;
+
+  if (departmentWasUnclear) {
+    reasons.push("진료과를 직접 말씀하지 않으셔서, 임의로 정하지 않고 일반 안내 경로로 안내해 드립니다.");
+  } else if (departmentLabel) {
+    reasons.push(`말씀하신 진료과(${departmentLabel})에 맞는 경로로 안내해 드렸습니다.`);
+  } else {
+    reasons.push("말씀하신 진료과에 맞는 경로로 안내해 드렸습니다.");
+  }
+
+  if (facts.guardianPresent === false) {
+    reasons.push("보호자 동행 없이 오셔서, 직원 도움을 받을 수 있는 경로를 우선으로 안내해 드렸습니다.");
+  }
+
+  if (_rec.unmetConditions && _rec.unmetConditions.length > 0) {
+    reasons.push(`요청하신 지원 중 일부(${_rec.unmetConditions.join(", ")})는 이 경로에서 제공되지 않을 수 있습니다.`);
+  }
+
+  return reasons;
 }

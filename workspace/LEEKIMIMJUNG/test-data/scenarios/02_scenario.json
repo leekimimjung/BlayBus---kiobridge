@@ -1,0 +1,54 @@
+{
+  "_scenario": "청각장애 환자 — 초진, 예약없음, 청각지원 → 화면 시각 알림으로 대체",
+  "_expectedRecommendedCandidateId": "HOS-003",
+  "_note": "청각지원(HEARING_SUPPORT)은 candidate.supportedOptions.SUPPORT 의 'HEARING' 옵션으로 매핑됨. 소리 대신 화면 시각 알림 대체는 프론트엔드 UI 몫.",
+  "inputContractVersion": "1.0.0",
+  "environmentId": "hospital",
+  "teamId": "LEEKIMIMJUNG",
+  "profile": {
+    "profileId": "SCENARIO-02-PROFILE",
+    "dataClassification": "SYNTHETIC_PROFILE",
+    "source": {
+      "collectionChannel": "WEB_FORM",
+      "providerId": "LEEKIMIMJUNG",
+      "collectedAt": "2026-08-10T00:00:00Z"
+    },
+    "accessibility": {
+      "largeText": false,
+      "simpleSteps": false,
+      "visualGuidance": true,
+      "hearingSupport": true,
+      "mobilitySupport": false,
+      "highContrast": false,
+      "staffAssistancePreferred": false
+    },
+    "interaction": {
+      "preferredInput": "TOUCH",
+      "language": "ko-KR",
+      "confirmationRequired": true
+    },
+    "consent": {
+      "personalization": true,
+      "retentionPolicy": "SESSION_ONLY"
+    }
+  },
+  "sessionContext": {
+    "intent": { "task": "CHECK_IN" },
+    "facts": {
+      "visitType": "FIRST_VISIT",
+      "appointmentStatus": "NO_APPOINTMENT",
+      "departmentId": "UNSPECIFIED",
+      "guardianPresent": true
+    },
+    "preferences": {
+      "supportModes": ["HEARING_SUPPORT", "VISUAL_GUIDANCE"]
+    },
+    "hardConstraints": {
+      "medicalInferenceAllowed": false
+    },
+    "capabilities": {
+      "canUseSelfCheckIn": true
+    },
+    "fieldMetadata": {}
+  }
+}
