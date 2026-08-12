@@ -25,6 +25,18 @@ const GROUP_ID_TO_ACTION: Record<string, string> = {
   "SUPPORT": "select_support",
 };
 
+/**
+ * groupId -> 그 화면에서 실제로 허용되는 target.kind.
+ * fixture.screens[].targetKinds 기준 (state-engine의 isTargetKindAllowed 가 이걸로 검사함).
+ * "option"처럼 화면과 무관한 고정 kind를 쓰면 TARGET_KIND_NOT_ALLOWED로 거부됨.
+ */
+const GROUP_ID_TO_TARGET_KIND: Record<string, string> = {
+  "VISIT_TYPE": "visit_type",
+  "APPOINTMENT": "appointment",
+  "DEPARTMENT": "department",
+  "SUPPORT": "support",
+};
+
 export function buildExecutionPlan(
   _decision: UserDecision,
   _rec: Recommendation,
@@ -33,7 +45,13 @@ export function buildExecutionPlan(
   const decision: any = _decision;
   const rec: any = _rec;
   const fixture: any = _fixture;
-  const emptyPlan: any = { actions: [] };
+  const emptyPlan: any = {
+    planId: `PLAN-${Date.now()}`,
+    validationMode: "SIMULATION_ONLY",
+    executionEnvironment: "DIGITAL_TWIN",
+    actualDeviceCommandSent: false,
+    actions: [],
+  };
 
   if (!decision || decision.approved !== true) {
     return emptyPlan as ExecutionPlan;
@@ -127,7 +145,7 @@ export function buildExecutionPlan(
 
       const ok = pushAction(
         transition.action,
-        { kind: "option", groupId, id: chosenValue },
+        { kind: GROUP_ID_TO_TARGET_KIND[groupId] ?? "option", groupId, id: chosenValue },
         transition.to,
       );
 
@@ -151,9 +169,11 @@ export function buildExecutionPlan(
     }
 
     // 🔴 FIX #5: select_flow는 { kind: "candidate", id } 형태로
+    // "screen" 은 실제로 어떤 화면에서도 허용되는 kind가 아님 — 옵션그룹과 무관한 진행/검토
+    // 액션(start, verify_* 등)은 WELCOME/CHECKIN_REVIEW 화면의 targetKinds인 "review"를 씀.
     const target = generalTransition.action === "select_flow"
       ? { kind: "candidate", id: recommendedCandidateId }
-      : { kind: "screen", id: generalTransition.to };
+      : { kind: "review", id: generalTransition.to };
 
     const ok = pushAction(
       generalTransition.action,
@@ -188,7 +208,7 @@ export function buildExecutionPlan(
 
   const verifierOk = pushAction(
     verifierTransition.action,
-    { kind: "screen", id: currentState },
+    { kind: "review", id: currentState },
     verifierTransition.to,
   );
 
@@ -196,5 +216,11 @@ export function buildExecutionPlan(
     return emptyPlan as ExecutionPlan;
   }
 
-  return { actions } as ExecutionPlan;
+  return {
+    planId: `PLAN-${Date.now()}`,
+    validationMode: "SIMULATION_ONLY",
+    executionEnvironment: "DIGITAL_TWIN",
+    actualDeviceCommandSent: false,
+    actions,
+  } as ExecutionPlan;
 }
