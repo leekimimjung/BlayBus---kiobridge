@@ -39,6 +39,8 @@ import { collectProfile } from "./frontend/collectProfile.ts"; // STEP 1
 import { mapToCanonicalInput } from "./backend/mapToCanonicalInput.ts" // STEP 2
 import { createSessionContext } from "./backend/createSessionContext.ts"; // STEP 3
 
+import { checkUnknownStop } from "./backend/checkUnknownStop.ts"; // UNKNOWN·수동개입 STOP 게이트 (createSessionContext 직후, recommend 직전)
+
 /* ═══════════════════════════ 2. 추천 ═══════════════════════════ */
 import { filterCandidates } from "./agent/filterCandidates.ts"; // STEP 4
 import { recommend } from "./agent/recommend.ts"; // STEP 5
@@ -70,8 +72,15 @@ export async function buildSubmission(fixture: PublicFixture, teamId: string): P
   const profile = mapToCanonicalInput(raw);
   const sessionContext = createSessionContext(raw, fixture);
 
+  // UNKNOWN·수동개입 STOP 게이트 — 확신할 수 없는 값으로 recommend() 가 임의 판단하지 못하게 막음
+  const stopGate = checkUnknownStop(sessionContext);
+  if (stopGate.stop) {
+    throw new Error(`STOP: ${stopGate.reasons.join("; ")}`);
+  }
+
   const survivors = filterCandidates(fixture.candidates, sessionContext);
   const recommendation = recommend(survivors, sessionContext, profile);
+  if (stopGate.requiresReconfirmation) recommendation.requiresReconfirmation = true;
   recommendation.recommendationReasons = explainRecommendation(recommendation, sessionContext);
   recommendation.alternativeCandidateIds = buildAlternatives(survivors, recommendation);
 
