@@ -1,24 +1,26 @@
 /**
  * STEP 9 — buildExecutionPlan
  *
+ * 핵심 수정:
+ *   1. selectedOptions 는 decision/rec 에 없는 필드였음 → candidate.supportedOptions 에서
+ *      직접 값을 뽑아서 채움 (그룹당 값 1개인 fixture 전제, [0] 사용).
+ *   2. select_menu / select_option 같은 의사코드 action 이름을 전부 제거.
+ *      currentState 기준으로 fixture.transitions 에서 실제 action 을 찾아 진행.
+ *   3. FORBIDDEN_ACTIONS 를 병원 fixture 실제 금지 액션(diagnose, triage,
+ *      assign_department_final, query_patient) 위주로 재구성.
+ *
  * 목적:
  *   승인된 결정을 의미 기반 실행계획으로 바꿉니다.
- *
- * 참고:
- *   selectedOptions 값은 결국 STEP 3(SessionContext.preferences)에서 온 사용자 선호이며,
- *   Soft 불일치는 BLOCK 대상이 아니라 추천 이유 설명 대상입니다 (SESSION_CONTEXT_DICTIONARY).
- *   여기서는 "후보가 그 옵션을 지원하는지"만 검증합니다 (Stage B 실행 가능성 검증).
  *
  * 반드시:
  *   - target 은 { kind, id, groupId? } 의미 대상만 사용
  *   - fixture.transitions 를 따라 expectedBeforeState / expectedAfterState 채움
  *   - manifest.reviewBoundaryState 에서 멈추고 필수 verifier 실행
- *   - 실제로 고른 값이 사용자 맥락과 일치해야 함 (Stage B 검증)
  *
  * 금지:
- *   - 결제 · 본인확인 완료 · 행정처리 확정 Action
+ *   - 결제 · 본인확인 완료 · 행정처리 확정 · 진단/분류/최종배정/환자조회 Action
  *   - 같은 단일선택 옵션 그룹을 다른 값으로 두 번 선택
- *   - 화면 페이지 이동 Action
+ *   - 화면 페이지 이동만을 위한 Action
  */
 import type {
   ExecutionPlan, PublicFixture, Recommendation, UserDecision,
@@ -26,11 +28,19 @@ import type {
 
 export type RawUserInput = Record<string, unknown>;
 
+/**
+ * 절대 계획에 포함하면 안 되는 Action.
+ * 병원 전용(diagnose, triage, assign_department_final, query_patient) +
+ * 도메인 공통 금지(결제/본인확인 완료/행정처리 확정).
+ */
 const FORBIDDEN_ACTIONS = new Set<string>([
+  "diagnose",
+  "triage",
+  "assign_department_final",
+  "query_patient",
   "make_payment",
   "select_payment",
   "confirm_payment",
-  "complete_checkin",
   "submit_application",
   "issue_document",
   "confirm_identity",
@@ -69,114 +79,126 @@ export function buildExecutionPlan(
     return emptyPlan as ExecutionPlan;
   }
 
+  // ── 옵션 값은 decision/rec 이 아니라 candidate.supportedOptions 에서 직접 가져온다.
+  //    그룹당 값이 1개인 fixture 전제이므로 [0] 사용.
+  const supportedOptions: any = candidate.supportedOptions ?? {};
+  const resolvedOptionValues: Record<string, string> = {};
+  for (const groupId of Object.keys(supportedOptions)) {
+    const values: unknown[] = supportedOptions[groupId] ?? [];
+    if (values.length > 0) {
+      resolvedOptionValues[groupId] = String(values[0]);
+    }
+  }
+
   const actions: any[] = [];
   let actionIndex = 0;
   let currentState: string = manifest.initialState ?? "";
 
-  const findTransition = (from: string, action: string) =>
-    transitions.find((t: any) => t && t.from === from && t.action === action);
+  // currentState 에서 나가는 transition 중, 아직 채우지 않은 옵션 그룹에 해당하는
+  // action 을 찾아서 target 을 만든다. 없으면 null.
+  const findNextGroupTransition = (filledGroups: Set<string>) => {
+    for (const groupId of Object.keys(resolvedOptionValues)) {
+      if (filledGroups.has(groupId)) continue;
+      const group = optionGroups.find((g: any) => g && g.id === groupId);
+      if (!group) continue;
+      const transition = transitions.find(
+        (t: any) => t && t.from === currentState && t.optionGroupId === groupId,
+      );
+      if (transition) {
+        return { transition, groupId, group };
+      }
+    }
+    return null;
+  };
 
-  const pushAction = (action: string, target: Record<string, unknown>): boolean => {
+  const pushAction = (action: string, target: Record<string, unknown>, toState: string) => {
     if (FORBIDDEN_ACTIONS.has(action)) {
       return false;
     }
-    const transition = findTransition(currentState, action);
-    const expectedBeforeState = currentState;
-    const expectedAfterState = transition ? transition.to : currentState;
-
     actions.push({
       actionIndex: actionIndex++,
       action,
       target,
-      expectedBeforeState,
-      expectedAfterState,
+      expectedBeforeState: currentState,
+      expectedAfterState: toState,
     });
-
-    currentState = expectedAfterState;
+    currentState = toState;
     return true;
   };
 
-  // 1. 추천 후보 선택
-  pushAction("select_menu", {
-    kind: "candidate",
-    id: recommendedCandidateId,
-  });
-
-  // 2. 필수 옵션 그룹 채우기 (선택값은 SessionContext.preferences 기반)
-  const supportedOptions: any = candidate.supportedOptions ?? {};
-  const supportedOptionGroupIds: string[] = Object.keys(supportedOptions);
-  const selectedOptions: any =
-    decision.selectedOptions ?? rec.selectedOptions ?? {};
   const filledGroups = new Set<string>();
+  const requiredGroupIds = optionGroups
+    .filter((g: any) => g && g.required && Object.prototype.hasOwnProperty.call(supportedOptions, g.id))
+    .map((g: any) => g.id);
 
-  for (const group of optionGroups) {
-    if (!group) continue;
-    const groupId: string = group.id;
-    if (!supportedOptionGroupIds.includes(groupId)) continue;
-    if (filledGroups.has(groupId)) continue;
+  const reviewBoundaryState: string = manifest.reviewBoundaryState ?? "";
+  let safetyCounter = 0;
 
-    const chosenValue = selectedOptions[groupId];
+  // ── currentState 가 검토 경계에 도달할 때까지, 그때그때 실제 transition 을 찾아 진행.
+  while (currentState !== reviewBoundaryState && safetyCounter < 30) {
+    safetyCounter++;
 
-    if (chosenValue == null) {
-      if (group.required) {
+    // 1) 아직 안 채운 옵션 그룹에 대한 transition 이 지금 상태에서 나가면 그걸 우선 실행
+    const groupMatch = findNextGroupTransition(filledGroups);
+    if (groupMatch) {
+      const { transition, groupId } = groupMatch;
+      const chosenValue = resolvedOptionValues[groupId];
+      const ok = pushAction(
+        transition.action,
+        { kind: "option", groupId, id: chosenValue },
+        transition.to,
+      );
+      if (!ok) {
         return emptyPlan as ExecutionPlan;
       }
+      filledGroups.add(groupId);
       continue;
     }
 
-    const supportedValues: string[] = supportedOptions[groupId] ?? [];
-    if (supportedValues.length > 0 && !supportedValues.includes(chosenValue)) {
-      return emptyPlan as ExecutionPlan;
-    }
-
-    pushAction("select_option", {
-      kind: "option",
-      groupId,
-      id: chosenValue,
-    });
-    filledGroups.add(groupId);
-  }
-
-  for (const group of optionGroups) {
-    if (!group) continue;
-    if (
-      group.required &&
-      supportedOptionGroupIds.includes(group.id) &&
-      !filledGroups.has(group.id)
-    ) {
-      return emptyPlan as ExecutionPlan;
-    }
-  }
-
-  // 3. 검토 경계까지 이동
-  const reviewBoundaryState: string = manifest.reviewBoundaryState ?? "";
-  let safetyCounter = 0;
-  while (currentState !== reviewBoundaryState && safetyCounter < 20) {
-    const nextTransition = transitions.find(
-      (t: any) => t && t.from === currentState && !FORBIDDEN_ACTIONS.has(t.action),
+    // 2) 옵션 그룹과 무관한 일반 진행 transition
+    const generalTransition = transitions.find(
+      (t: any) => t && t.from === currentState && !t.optionGroupId,
     );
-    if (!nextTransition) break;
-    pushAction(nextTransition.action, {
-      kind: "screen",
-      id: nextTransition.to,
-    });
-    safetyCounter++;
+    if (!generalTransition) {
+      break;
+    }
+    const ok = pushAction(
+      generalTransition.action,
+      { kind: "screen", id: generalTransition.to },
+      generalTransition.to,
+    );
+    if (!ok) {
+      return emptyPlan as ExecutionPlan;
+    }
+  }
+
+  // 필수 옵션 그룹을 다 채우지 못했으면 실행 불가
+  for (const groupId of requiredGroupIds) {
+    if (!filledGroups.has(groupId)) {
+      return emptyPlan as ExecutionPlan;
+    }
   }
 
   if (currentState !== reviewBoundaryState) {
     return emptyPlan as ExecutionPlan;
   }
 
-  // 4. 필수 verifier action
+  // ── 필수 verifier action (검토 경계에서 나가는 verify_* transition)
   const verifierTransition = transitions.find(
     (t: any) => t && t.from === currentState && /^verify_/.test(t.action ?? ""),
   );
-  const verifierAction: string = verifierTransition ? verifierTransition.action : "verify_checkin";
+  if (!verifierTransition) {
+    return emptyPlan as ExecutionPlan;
+  }
 
-  pushAction(verifierAction, {
-    kind: "screen",
-    id: currentState,
-  });
+  const verifierOk = pushAction(
+    verifierTransition.action,
+    { kind: "screen", id: currentState },
+    verifierTransition.to,
+  );
+  if (!verifierOk) {
+    return emptyPlan as ExecutionPlan;
+  }
 
   return { actions } as ExecutionPlan;
 }
