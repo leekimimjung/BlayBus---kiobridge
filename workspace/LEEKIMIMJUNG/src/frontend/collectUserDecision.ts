@@ -52,6 +52,28 @@ export const RECOMMENDED_DEPARTMENT = {
   desc: "추천 — 방문 정보를 바탕으로 안내했어요",
 } as const;
 
+/**
+ * 병원 후보(fixture의 HOS-001~006, 고정값) → 화면에 보여줄 이름/진료과/위치.
+ * 🚨 이건 "증상으로 진료과를 추론"하는 게 아니라, 이미 STEP5(recommend)가 고른
+ * candidateId를 화면에 예쁘게 보여주기 위한 표시용 참고 데이터입니다 (fixture 자체가 고정값).
+ */
+const CANDIDATE_DISPLAY: Record<string, { title: string; department: string; floor: string }> = {
+  "HOS-001": { title: "예약 재진 접수", department: "내과", floor: "2층 · 내과 접수 데스크" },
+  "HOS-002": { title: "예약 초진 접수", department: "정형외과", floor: "3층 · 정형외과 접수 데스크" },
+  "HOS-003": { title: "비예약 초진 안내", department: "일반 안내", floor: "1층 · 종합 안내데스크" },
+  "HOS-004": { title: "건강검진 안내", department: "건강검진센터", floor: "4층 · 건강검진센터" },
+  "HOS-005": { title: "검사 예약 확인", department: "영상의학과", floor: "지하 1층 · 영상의학과" },
+  "HOS-006": { title: "직원 도움 요청", department: "안내데스크", floor: "1층 · 종합 안내데스크" },
+};
+
+/** candidateId로 표시 정보를 찾습니다. 모르는 값이면 "일반 안내"로 안전하게 대체합니다. */
+function resolveCandidateDisplay(candidateId: string | null | undefined): { candidateId: string; title: string; department: string; floor: string } {
+  const found = candidateId ? CANDIDATE_DISPLAY[candidateId] : undefined;
+  return found
+    ? { candidateId: candidateId as string, ...found }
+    : { candidateId: candidateId ?? "", title: "일반 안내", department: "일반 안내", floor: "1층 · 종합 안내데스크" };
+}
+
 const header = () => `
   <header class="status-bar">
     <div class="brand"><span class="brand-mark"></span><strong>은빛 병원</strong></div>
@@ -88,14 +110,29 @@ const shell = (content: string) => `${header()}<div class="page">${content}</div
  * 추천 진료과 카드 + "다른 진료과를 선택할래요" 카드 2개 선택지.
  * 설정에서 음성 안내를 켰으면 "음성 안내 모드" 필을 표시합니다. 증상은 묻지 않습니다.
  */
-export function departmentChoiceHTML(selected: string, settings: AccessibilityState = {}): string {
+/**
+ * @param recommended STEP5(recommend)/STEP6(explainRecommendation)가 실제로 계산한 결과.
+ *   생략하면(예: 데모용 미리보기) RECOMMENDED_DEPARTMENT를 기본값으로 씁니다 — 실제 흐름에서는
+ *   반드시 renderRecommendationScreen이 진짜 Recommendation을 여기 넘겨야 합니다.
+ */
+export function departmentChoiceHTML(
+  selected: string,
+  settings: AccessibilityState = {},
+  recommended: { candidateId: string; title: string; department: string; floor: string; reasons: string[] } = {
+    candidateId: RECOMMENDED_DEPARTMENT.value,
+    title: RECOMMENDED_DEPARTMENT.title,
+    department: RECOMMENDED_DEPARTMENT.title,
+    floor: "3층 · 정형외과 접수 데스크",
+    reasons: [],
+  },
+): string {
   const voice = !!settings["VOICE_GUIDANCE"];
   const staff = !!settings["STAFF_HELP"];
   const visual = !!settings["VISUAL_GUIDANCE"];
   const simple = !!settings["SIMPLE_STEPS"];
-  const reason = staff
-    ? "직원 도움을 선호하셔서, 직원이 찾아와 진료과까지 안내해 드릴게요.<br />다르다면 아래에서 직접 선택할 수 있어요."
-    : "재진 기록과 방문 정보를 바탕으로 판단했어요.<br />다르다면 아래에서 직접 선택할 수 있어요.";
+  const reason = recommended.reasons.length > 0
+    ? recommended.reasons.join("<br />") + "<br />다르다면 아래에서 직접 선택할 수 있어요."
+    : "입력하신 정보를 바탕으로 안내해 드려요.<br />다르다면 아래에서 직접 선택할 수 있어요.";
   return `
   ${progress(3)}
   <section class="screen form-screen cp-screen">
@@ -107,17 +144,17 @@ export function departmentChoiceHTML(selected: string, settings: AccessibilitySt
       <span class="pill pill-acc">추천 정확도 높음</span>
       ${backLink(simple)}
     </div>
-    <h1 class="title-lg">정형외과로<br />안내해 드릴게요</h1>
+    <h1 class="title-lg">${recommended.department}로<br />안내해 드릴게요</h1>
     ${calmNote(simple)}
     <div class="q-card">
-      <strong>왜 정형외과인가요?</strong>
+      <strong>왜 ${recommended.department}인가요?</strong>
       <p>${reason}</p>
     </div>
-    <button type="button" class="dept-card ${selected === RECOMMENDED_DEPARTMENT.value ? "is-selected" : ""}" data-group="department" data-value="${RECOMMENDED_DEPARTMENT.value}">
-      <span class="dept-checkbox" aria-hidden="true">${selected === RECOMMENDED_DEPARTMENT.value ? "✓" : ""}</span>
+    <button type="button" class="dept-card ${selected === recommended.candidateId ? "is-selected" : ""}" data-group="department" data-value="${recommended.candidateId}">
+      <span class="dept-checkbox" aria-hidden="true">${selected === recommended.candidateId ? "✓" : ""}</span>
       <span class="dept-copy">
-        <span class="dept-title">${RECOMMENDED_DEPARTMENT.title}</span>
-        <span class="dept-floor">3층 · 정형외과 접수 데스크</span>
+        <span class="dept-title">${recommended.title}</span>
+        <span class="dept-floor">${recommended.floor}</span>
         <span class="dept-hint">${staff ? "직원이 찾아와서 안내해 드릴게요" : "다음으로 넘어가면 길을 안내해 드려요"}</span>
       </span>
     </button>
@@ -133,18 +170,20 @@ export function departmentChoiceHTML(selected: string, settings: AccessibilitySt
 
 
 
-/** 진료과 직접 선택지 — "다른 진료과를 선택할래요"를 고르면 나오는 10개 진료과. 값은 공식 enum 스타일을 따릅니다. */
+/**
+ * 진료과 직접 선택지 — "다른 진료과를 선택할래요"를 고르면 나오는 목록.
+ * 🚨 병원 환경 공식 departmentId enum 6개만 씁니다 (docs/ENUM_REFERENCE.md).
+ * 예전 버전은 여기 없는 값(신경과/정신건강의학과 등 7개)을 썼는데, 그 값들은 실제
+ * departmentId 스키마에 없어서 제출하면 무조건 거부됩니다 — 공식 6개로 교체했습니다.
+ * "잘 모르겠어요"는 UNSPECIFIED로 매핑됩니다 (증상으로 진료과 추론 금지 — 모르면 일반 안내).
+ */
 export const DEPARTMENTS = [
   { value: "INTERNAL_MEDICINE", title: "내과" },
-  { value: "NEUROLOGY", title: "신경과" },
-  { value: "PSYCHIATRY", title: "정신건강의학과" },
-  { value: "SURGERY", title: "외과" },
   { value: "ORTHOPEDICS", title: "정형외과" },
-  { value: "OBSTETRICS_AND_GYNECOLOGY", title: "산부인과" },
-  { value: "PEDIATRICS", title: "소아청소년과" },
-  { value: "OPHTHALMOLOGY", title: "안과" },
   { value: "ENT", title: "이비인후과" },
-  { value: "DERMATOLOGY", title: "피부과" },
+  { value: "RADIOLOGY", title: "영상의학과" },
+  { value: "HEALTH_SCREENING", title: "건강검진센터" },
+  { value: "UNSPECIFIED", title: "잘 모르겠어요 (일반 안내)" },
 ] as const;
 
 /** 단일 선택 카드 (예약 여부 / 초진·재진 / 진료과 목록) — 체크박스 선택 표시. */
@@ -204,17 +243,63 @@ function closestButton(target: EventTarget | null): HTMLElement | null {
 /** 추천 결과 + 추천 이유(recommendationReasons) 표시 화면 */
 async function renderRecommendationScreen(_rec: Recommendation): Promise<void> {
   const mount = resolveMount();
-  mount.innerHTML = shell(departmentChoiceHTML("", {}));
-  focusFirst(mount);
+  const display = resolveCandidateDisplay(_rec.recommendedCandidateId);
+  const recommended = {
+    candidateId: display.candidateId,
+    title: display.title,
+    department: display.department,
+    floor: display.floor,
+    reasons: _rec.recommendationReasons ?? [],
+  };
+  return new Promise((resolve) => {
+    let selected = recommended.candidateId;
+    const draw = () => {
+      mount.innerHTML = shell(departmentChoiceHTML(selected, {}, recommended));
+      focusFirst(mount);
+    };
+    function onClick(event: MouseEvent) {
+      const btn = closestButton(event.target);
+      if (!btn) return;
+      const { group, value, action } = btn.dataset;
+      if (group === "department" && value) {
+        selected = value;
+        draw();
+        return;
+      }
+      if (action === "next" && selected) {
+        mount.removeEventListener("click", onClick);
+        resolve();
+      }
+    }
+    mount.addEventListener("click", onClick);
+    draw();
+  });
 }
 
 /** 대안 후보(rec.alternativeCandidateIds) "다른 것 보기" 화면 */
-async function renderAlternativesScreen(_rec: Recommendation): Promise<{ selectedCandidateId: string }> {
+async function renderAlternativesScreen(
+  _rec: Recommendation,
+): Promise<{ backed: true } | { backed: false; selectedCandidateId: string }> {
   const mount = resolveMount();
+  const alternatives = (_rec.alternativeCandidateIds ?? []).map((candidateId) => resolveCandidateDisplay(candidateId));
   let selected = "";
   return new Promise((resolve) => {
     const draw = () => {
-      mount.innerHTML = shell(departmentListScreenHTML(selected, {}));
+      mount.innerHTML = shell(`
+      ${progress(3)}
+      <section class="screen form-screen cp-screen">
+        <button type="button" class="back-link" data-action="back" aria-label="이전으로 돌아가기">‹</button>
+        <div class="pill-row"></div>
+        <h1 class="title-lg">다른 후보를<br />골라주세요</h1>
+        <p class="subtitle">안내받을 후보를 직접 선택해 주세요</p>
+        ${
+          alternatives.length > 0
+            ? alternatives
+                .map((c) => choiceCard("department", c.candidateId, c.title, c.floor, selected === c.candidateId))
+                .join("")
+            : `<p class="subtitle">다른 후보가 없어요. 직원 도움을 요청해 주세요.</p>`
+        }
+      </section>${nextButton("다음", selected !== "", false)}`);
       focusFirst(mount);
     };
     function onClick(event: MouseEvent) {
@@ -227,12 +312,13 @@ async function renderAlternativesScreen(_rec: Recommendation): Promise<{ selecte
         return;
       }
       if (action === "back") {
-        void renderRecommendationScreen(_rec);
+        mount.removeEventListener("click", onClick);
+        resolve({ backed: true });
         return;
       }
       if (action === "next" && selected) {
         mount.removeEventListener("click", onClick);
-        resolve({ selectedCandidateId: selected });
+        resolve({ backed: false, selectedCandidateId: selected });
       }
     }
     mount.addEventListener("click", onClick);
@@ -241,8 +327,9 @@ async function renderAlternativesScreen(_rec: Recommendation): Promise<{ selecte
 }
 
 /** 최종 확인 버튼 4종 — 수락 / 거절 / 다른 후보 선택 / 다시 입력 */
-async function renderApprovalButtons(): Promise<"APPROVE" | "REJECT" | "PICK_ALTERNATIVE" | "RESTART"> {
+async function renderApprovalButtons(_rec: Recommendation): Promise<"APPROVE" | "REJECT" | "PICK_ALTERNATIVE" | "RESTART"> {
   const mount = resolveMount();
+  const display = resolveCandidateDisplay(_rec.recommendedCandidateId);
   return new Promise((resolve) => {
     const draw = () => {
       mount.innerHTML = shell(`
@@ -251,13 +338,13 @@ async function renderApprovalButtons(): Promise<"APPROVE" | "REJECT" | "PICK_ALT
         <div class="pill-row">
           <span class="pill pill-acc">추천 정확도 높음</span>
         </div>
-        <h1 class="title-lg">정형외과로<br />안내해 드릴까요?</h1>
+        <h1 class="title-lg">${display.department}로<br />안내해 드릴까요?</h1>
         <p class="subtitle">최종 확인이에요. 원하는 선택지를 골라주세요.</p>
         <button type="button" class="option-card" data-action="approve">
           <span class="checkbox" aria-hidden="true">✓</span>
           <span class="option-copy">
             <strong>네, 안내받을게요</strong>
-            <small>수락 — 정형외과 안내를 시작해요</small>
+            <small>수락 — ${display.department} 안내를 시작해요</small>
           </span>
         </button>
         <button type="button" class="option-card" data-action="pick-alternative">
@@ -335,16 +422,19 @@ function buildUserDecision(approved: boolean, decision: string, note?: string): 
 export async function collectUserDecision(_rec: Recommendation): Promise<UserDecision> {
   await renderRecommendationScreen(_rec);
 
-  const choice = await renderApprovalButtons();
+  for (;;) {
+    const choice = await renderApprovalButtons(_rec);
 
-  if (choice === "PICK_ALTERNATIVE") {
-    const { selectedCandidateId } = await renderAlternativesScreen(_rec);
-    return buildUserDecision(true, "MODIFY", `다른 진료과 선택: ${selectedCandidateId}`);
+    if (choice === "PICK_ALTERNATIVE") {
+      const alt = await renderAlternativesScreen(_rec);
+      if (alt.backed) continue;
+      return buildUserDecision(true, "MODIFY", `다른 진료과 선택: ${alt.selectedCandidateId}`);
+    }
+
+    if (choice === "RESTART") {
+      return buildUserDecision(false, "REJECT", "처음부터 다시 입력");
+    }
+
+    return buildUserDecision(choice === "APPROVE", choice);
   }
-
-  if (choice === "RESTART") {
-    return buildUserDecision(false, "REJECT", "처음부터 다시 입력");
-  }
-
-  return buildUserDecision(choice === "APPROVE", choice);
 }
