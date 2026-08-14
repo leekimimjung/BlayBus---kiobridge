@@ -15,11 +15,14 @@ import {
   departmentChoiceHTML,
   departmentListScreenHTML,
   loginChoiceScreenHTML,
+  pauseScreenHTML,
+  proceedConfirmOverlayHTML,
+  qrAuthScreenHTML,
   reservationScreenHTML,
   visitTypeScreenHTML,
 } from "./collectProfile.ts";
 
-test("메인 화면: 병원 이니셜(H) + 로그인/회원가입(펼침) · 비회원 시작 · 직원 호출 링크", () => {
+test("메인 화면: 병원 이니셜(H) + 로그인/회원가입 · 비회원 시작 · 직원 호출 링크", () => {
   const html = loginChoiceScreenHTML();
   assert.match(html, /hero-mark/);
   assert.match(html, /안아프게 해 드릴게요/);
@@ -28,23 +31,64 @@ test("메인 화면: 병원 이니셜(H) + 로그인/회원가입(펼침) · 비
   assert.match(html, /data-choice="guest"/);
   assert.match(html, /비회원으로 시작하기/);
   assert.match(html, /직원을 호출해주세요/);
-
-  const open = loginChoiceScreenHTML(true);
-  assert.match(open, /data-choice="login"/);
-  assert.match(open, /data-choice="signup"/);
-  assert.match(open, /data-choice="guest"/);
+  assert.doesNotMatch(html, /data-choice="login"/);
+  assert.doesNotMatch(html, /data-choice="signup"/);
 });
 
-test("나에게 맞는 설정: 글씨크기/음성안내/보호자/고대비/공황장애 5개 복수 선택, 최소 1개 선택해야 완료 활성", () => {
-  assert.equal(ACCESSIBILITY_SETTINGS.length, 5);
+test("QR 로그인/회원가입 화면: 돌아가기 · 완료 버튼 · QR 인식 영역", () => {
+  const html = qrAuthScreenHTML();
+  assert.match(html, /QR코드로<br \/>로그인\/회원가입/);
+  assert.match(html, /로그인과 회원가입이 한번에 가능해요/);
+  assert.match(html, /qr-box/);
+  assert.match(html, /data-action="back"/);
+  assert.match(html, /data-action="next"/);
+  assert.match(html, />완료</);
+  assert.doesNotMatch(html, /직원 호출/);
+});
+
+test("나에게 맞는 설정: 글씨크기/음성안내/시각안내/보호자/고대비/쉬운모드/공황장애/직원도움 8개 복수 선택, 최소 1개 선택해야 완료 활성", () => {
+  assert.equal(ACCESSIBILITY_SETTINGS.length, 8);
   assert.ok(ACCESSIBILITY_SETTINGS.some((s) => s.key === "LARGE_TEXT" && /글씨/.test(s.title)));
   assert.ok(ACCESSIBILITY_SETTINGS.some((s) => s.key === "VOICE_GUIDANCE" && /음성/.test(s.title)));
+  assert.ok(ACCESSIBILITY_SETTINGS.some((s) => s.key === "VISUAL_GUIDANCE" && /시각/.test(s.title)));
   assert.ok(ACCESSIBILITY_SETTINGS.some((s) => s.key === "GUARDIAN_MODE" && /보호자/.test(s.title)));
   assert.ok(ACCESSIBILITY_SETTINGS.some((s) => s.key === "HIGH_CONTRAST" && /고대비/.test(s.title) && /뚜렷/.test(s.desc)));
+  assert.ok(ACCESSIBILITY_SETTINGS.some((s) => s.key === "EASY_MODE" && /쉬운 모드/.test(s.title) && /설명/.test(s.desc)));
   assert.ok(ACCESSIBILITY_SETTINGS.some((s) => s.key === "SIMPLE_STEPS" && /공황장애/.test(s.title)));
+  assert.ok(ACCESSIBILITY_SETTINGS.some((s) => s.key === "STAFF_HELP" && /직원/.test(s.title)));
 
   assert.match(accessibilityScreenHTML({}), /disabled/);
   assert.doesNotMatch(accessibilityScreenHTML({ LARGE_TEXT: true }), /disabled/);
+});
+
+test("로그인 여부: 같은 설정 화면에서 제목만 바뀐다 — 비회원은 '편하신 방식을 골라주세요', 로그인은 '전에 하신 설정이 맞는지 확인해 주세요'", () => {
+  assert.match(accessibilityScreenHTML({}), /편하신 방식을/);
+  assert.doesNotMatch(accessibilityScreenHTML({}), /전에 하신 설정/);
+  assert.match(accessibilityScreenHTML({}, false, true), /전에 하신 설정이 맞는지/);
+  assert.doesNotMatch(accessibilityScreenHTML({}, false, true), /편하신 방식을/);
+});
+
+test("공황장애 안심 모달: '다음 페이지로 넘어가시겠어요?' + 아니요/네 + 되돌아갈 수 있다는 안심 문구", () => {
+  const html = proceedConfirmOverlayHTML();
+  assert.match(html, /다음 페이지로/);
+  assert.match(html, /잘못 누르더라도/);
+  assert.match(html, /이전 페이지로 다시 돌아갈 수 있어요/);
+  assert.match(html, /data-action="confirm-close"/);
+  assert.match(html, /data-action="confirm-no"/);
+  assert.match(html, /data-action="confirm-yes"/);
+  assert.match(html, />아니요</);
+  assert.match(html, />네</);
+});
+
+test("쉬운 모드: 평소엔 선택지 설명을 숨기고, 쉬운 모드를 켜면 설명이 보인다 (설정·예약·초진재진 화면)", () => {
+  assert.doesNotMatch(accessibilityScreenHTML({ HIGH_CONTRAST: true }), /글을 조금 더 뚜렷하게 볼 수 있어요/);
+  assert.match(accessibilityScreenHTML({ HIGH_CONTRAST: true, EASY_MODE: true }), /글을 조금 더 뚜렷하게 볼 수 있어요/);
+
+  assert.doesNotMatch(reservationScreenHTML(""), /예약하신 일정으로/);
+  assert.match(reservationScreenHTML("", { EASY_MODE: true }), /예약하신 일정으로/);
+
+  assert.doesNotMatch(visitTypeScreenHTML(""), /이전 방문 기록을 바탕으로/);
+  assert.match(visitTypeScreenHTML("", { EASY_MODE: true }), /이전 방문 기록을 바탕으로/);
 });
 
 test("글씨 크게: 카드를 누르면 보통/크게/아주 크게 3단계가 펼쳐진다", () => {
@@ -104,6 +148,67 @@ test("진료과(추천) 화면: 음성 안내 설정 시 음성 안내 모드 �
   assert.doesNotMatch(departmentChoiceHTML(""), /음성 안내 모드/);
 });
 
+test("진료과(추천) 화면: 직원 도움 선호 시 직원 도움 안내 필과 동행 문구를 보여준다", () => {
+  assert.match(departmentChoiceHTML("", { STAFF_HELP: true }), /직원 도움 안내/);
+  assert.match(departmentChoiceHTML("", { STAFF_HELP: true }), /직원이 찾아와서 안내해 드릴게요/);
+  assert.doesNotMatch(departmentChoiceHTML(""), /직원 도움 안내/);
+});
+
+test("진료과(추천) 화면: 시각 안내 설정 시 시각 안내 모드 필을 보여준다", () => {
+  assert.match(departmentChoiceHTML("", { VISUAL_GUIDANCE: true }), /시각 안내 모드/);
+  assert.doesNotMatch(departmentChoiceHTML(""), /시각 안내 모드/);
+});
+
+test("공황장애 모드: 예약·초진재진·진료과 화면에 차분한 안내 필과 안심 문구를 보여준다", () => {
+  for (const html of [
+    reservationScreenHTML("", { SIMPLE_STEPS: true }),
+    visitTypeScreenHTML("", { SIMPLE_STEPS: true }),
+    departmentChoiceHTML("", { SIMPLE_STEPS: true }),
+    departmentListScreenHTML("", { SIMPLE_STEPS: true }),
+  ]) {
+    assert.match(html, /차분한 안내/);
+    assert.match(html, /천천히 하셔도 돼요/);
+    assert.match(html, /data-action="pause"/);
+  }
+  assert.doesNotMatch(reservationScreenHTML(""), /차분한 안내/);
+  assert.doesNotMatch(visitTypeScreenHTML(""), /천천히 하셔도 돼요/);
+  assert.doesNotMatch(departmentChoiceHTML(""), /data-action="pause"/);
+});
+
+test("공황장애 모드: 모든 화면(설정·예약·초진재진·진료과 추천·진료과 목록)에 '이전 페이지로 돌아가기' 링크를 보여준다", () => {
+  const screens = [
+    accessibilityScreenHTML({ SIMPLE_STEPS: true }),
+    reservationScreenHTML("", { SIMPLE_STEPS: true }),
+    visitTypeScreenHTML("", { SIMPLE_STEPS: true }),
+    departmentChoiceHTML("", { SIMPLE_STEPS: true }),
+    departmentListScreenHTML("", { SIMPLE_STEPS: true }),
+  ];
+  for (const html of screens) {
+    assert.match(html, /class="back-link-text" data-action="back"/);
+    assert.match(html, /이전 페이지로 돌아가기/);
+  }
+  assert.doesNotMatch(reservationScreenHTML(""), /이전 페이지로 돌아가기/);
+  assert.doesNotMatch(visitTypeScreenHTML(""), /back-link-text/);
+  assert.doesNotMatch(departmentChoiceHTML(""), /back-link-text/);
+  assert.doesNotMatch(accessibilityScreenHTML({}), /back-link-text/);
+});
+
+test("잠시 쉬기 화면: 호흡 가이드 + 자발적 직원 호출 선택지를 보여준다", () => {
+  const html = pauseScreenHTML();
+  assert.match(html, /잠시 쉬어도/);
+  assert.match(html, /breathe/);
+  assert.match(html, /data-action="staff-ask"/);
+  assert.match(html, /괜찮으시면 직원을 부를 수 있어요/);
+  assert.match(html, /data-action="resume"/);
+  assert.doesNotMatch(html, /직원이 곧 도와드릴게요/);
+});
+
+test("잠시 쉬기 화면: 직원 호출을 누르면 안심 문구만 보여준다 (강제 호출 없음)", () => {
+  const asked = pauseScreenHTML(true);
+  assert.match(asked, /직원이 곧 도와드릴게요/);
+  assert.doesNotMatch(asked, /data-action="staff-ask"/);
+});
+
 test("진료과(추천) 화면: 진행 단계가 5칸이고 직원 호출 버튼이 없다", () => {
   const html = departmentChoiceHTML("");
   assert.match(html, /진행 단계 \d+\/5/);
@@ -142,17 +247,17 @@ test("진료과 직접 선택 화면: 10개 목록을 모두 렌더링하고 증
   assert.doesNotMatch(departmentListScreenHTML("ENT"), /disabled/);
 });
 
-test("assembleRawInput: 화면 값을 하나로 합치고 보호자 동행을 설정에서 파생한다", () => {
+test("assembleRawInput: 로그인 여부와 화면 값을 하나로 합치고 보호자 동행을 설정에서 파생한다", () => {
   const raw = assembleRawInput({
-    loginChoice: { loggedIn: false, auth: "GUEST" },
+    loginChoice: { loggedIn: true, auth: "LOGIN" },
     accessibility: { LARGE_TEXT: true, GUARDIAN_MODE: true, fontScale: "LARGE" },
     appointmentStatus: "HAS_APPOINTMENT",
     visitType: "FIRST_VISIT",
     departmentId: "ORTHOPEDICS",
   });
 
-  assert.equal(raw.loggedIn, false);
-  assert.equal(raw.auth, "GUEST");
+  assert.equal(raw.loggedIn, true);
+  assert.equal(raw.auth, "LOGIN");
   assert.equal(raw.LARGE_TEXT, true);
   assert.equal(raw.fontScale, "LARGE");
   assert.equal(raw.VOICE_GUIDANCE, undefined);
@@ -162,6 +267,19 @@ test("assembleRawInput: 화면 값을 하나로 합치고 보호자 동행을 �
   assert.equal(raw.departmentId, "ORTHOPEDICS");
   assert.equal(raw._confirmedByUser, true);
   assert.equal(raw._collectedVia, "WEB_FORM");
+});
+
+test("assembleRawInput: loginChoice 없이도 동작한다 (비회원 경로)", () => {
+  const raw = assembleRawInput({
+    accessibility: { fontScale: "NORMAL" },
+    appointmentStatus: "NO_APPOINTMENT",
+    visitType: "REVISIT",
+    departmentId: "ORTHOPEDICS",
+  });
+
+  assert.equal(raw.loggedIn, undefined);
+  assert.equal(raw.auth, undefined);
+  assert.equal(raw.appointmentStatus, "NO_APPOINTMENT");
 });
 
 test("collectProfile: 브라우저 DOM 이 없는 Node 에서 멈추지 않고 즉시 실패한다 (NOT_IMPLEMENTED 가 아님)", async () => {

@@ -88,6 +88,16 @@ h1 em { color: #0578a6; font-style: normal; }
 .subtitle { margin: 0 0 22px; color: #7a858e; font-size: 0.625rem; }
 .section-label { display: block; margin: 24px 2px 0; color: #3a3f47; font-size: 0.6875rem; font-weight: var(--fw-strong); }
 
+/* QR 로그인/회원가입 화면 */
+.qr-subtitle { margin: 10px 0 0; color: #6f7b84; font-size: 0.75rem; font-weight: var(--fw-strong); }
+.qr-box {
+  margin: 34px auto 0;
+  width: min(64%, 688px);
+  aspect-ratio: 1;
+  border-radius: 40px;
+  background: #dfe4e8;
+}
+
 .options { display: grid; gap: 12px; margin-top: 28px; }
 .options.compact { gap: 14px; margin-top: 24px; }
 .option-card {
@@ -290,15 +300,14 @@ h1 em { color: #0578a6; font-style: normal; }
   border-radius: 0;
   background: transparent;
 }
-.auth-row { display: flex; gap: 12px; }
 .auth-panel button { height: 62px; border-radius: 10px; font-size: 1.125rem; }
-.auth-row button, .auth-panel .auth-login, .auth-panel .guest {
+.auth-panel .auth-login, .auth-panel .guest {
   flex: 1;
   border: 0;
   font-weight: var(--fw-strong);
   cursor: pointer;
 }
-.auth-row button, .auth-panel .auth-login { color: #fff; background: #0072aa; }
+.auth-panel .auth-login { color: #fff; background: #0072aa; }
 .auth-panel .guest { color: #3a3f47; background: #dfe4e8; }
 
 .route-screen { padding-bottom: 105px; }
@@ -348,6 +357,65 @@ h1 em { color: #0578a6; font-style: normal; }
 .complete-icon { width: 96px; height: 96px; margin: auto; display: grid; place-items: center; border-radius: 50%; color: #fff; background: #0076a4; font-size: 3.75rem; font-weight: var(--fw-regular); }
 .completion-screen h1 { margin-top: 22px; font-size: 1.625rem; }
 .completion-screen p { color: #7f888f; font-size: 0.625rem; line-height: 1.7; }
+
+/* 최종 확인(수락/거절, 아니요/네) 모달 */
+.confirm-overlay {
+  position: absolute;
+  z-index: 20;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  background: rgb(18 24 29 / 55%);
+}
+.confirm-panel {
+  position: relative;
+  width: min(86%, 420px);
+  padding: 52px 28px 30px;
+  text-align: center;
+  border-radius: 16px;
+  background: #fff;
+}
+.confirm-close {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  width: 34px;
+  height: 34px;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: #6f7b84;
+  font-size: 1.125rem;
+  cursor: pointer;
+}
+.confirm-panel h2 { margin: 0 0 24px; font-size: 1.375rem; line-height: 1.4; }
+.confirm-note { margin: 14px 0 0; color: #6f7b84; font-size: 0.75rem; line-height: 1.6; }
+.confirm-actions { display: flex; gap: 12px; }
+.confirm-actions button {
+  flex: 1;
+  height: 60px;
+  border-radius: 100px;
+  font-size: 0.9375rem;
+  font-weight: var(--fw-strong);
+  cursor: pointer;
+}
+.confirm-no { border: 1.5px solid #dfe4e8; background: #f6f6f6; color: #222; }
+.confirm-yes { border: 1.5px solid #005e90; background: #005e90; color: #fff; }
+.confirm-close:focus-visible, .confirm-actions button:focus-visible { outline: 3px solid #045a7c; outline-offset: 2px; }
+
+/* 진료 취소 화면 */
+.cancel-icon {
+  width: 112px;
+  height: 112px;
+  margin: auto;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: #d32f2f;
+  color: #fff;
+  font-size: 3rem;
+  font-weight: var(--fw-regular);
+}
 .auto-return-note {
   margin: 0;
   color: #7f888f;
@@ -392,6 +460,21 @@ html.high-contrast .auto-return-note { color: #fff; }
   cursor: pointer;
 }
 .back-link:focus-visible { outline: 3px solid #0076a5; outline-offset: 2px; }
+/* "이전 페이지로 돌아가기" — pill 행 우측 밑줄 링크 (Figma 시안: 예약 화면 우상단) */
+.back-link-text {
+  margin-left: auto;
+  align-self: center;
+  padding: 8px 2px;
+  border: 0;
+  background: none;
+  color: var(--brand);
+  font-size: 0.8125rem;
+  font-weight: var(--fw-strong);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+.back-link-text:focus-visible { outline: 3px solid var(--brand-line); outline-offset: 2px; }
 .field-hint { margin: -6px 0 0 4px; color: #d2452f; font-size: 0.625rem; font-weight: var(--fw-medium); }
 .login-fields { display: grid; gap: 14px; margin-top: 26px; }
 .login-field {
@@ -528,6 +611,84 @@ html.high-contrast .auto-return-note { color: #fff; }
 }
 .pill-voice { background: var(--voice-bg); color: var(--brand); }
 .pill-acc { background: var(--acc-bg); color: var(--acc-ink); }
+.pill-visual { background: #F0E8F6; color: #6A2B8F; }
+.pill-staff { background: #FFE9E4; color: #C4432E; }
+
+/* 시각 안내 모드 — 방향 단계·지도 위 픽토그램 */
+.directions li .dir-ico {
+  width: 34px;
+  height: 34px;
+  display: grid;
+  place-items: center;
+  border-radius: 8px;
+  background: #EAF3F8;
+  color: var(--brand);
+}
+.directions li .dir-ico svg { width: 20px; height: 20px; }
+.map-ico {
+  position: absolute;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 2px solid var(--brand);
+  background: #fff;
+  color: var(--brand);
+  box-shadow: 0 2px 6px rgb(0 0 0 / 18%);
+}
+.map-ico svg { width: 22px; height: 22px; }
+.map-ico-elevator { left: 150px; top: 46%; }
+.map-ico-desk { right: 60px; top: 54px; }
+.map-ico-help { left: 44px; top: 62%; }
+
+/* 공황장애(SIMPLE_STEPS) 모드 — 차분한 안내 */
+.pill-calm { background: #E6F2FF; color: #1E6FA8; }
+.calm-note { margin: 16px 0 0; color: #5C7A94; font-size: 0.8125rem; font-weight: var(--fw-regular); line-height: 1.7; letter-spacing: -0.2px; }
+.rest-btn {
+  flex: 1;
+  height: 60px;
+  border: 2px solid #D9E3EA;
+  border-radius: 12px;
+  background: #fff;
+  color: #4A6A82;
+  font-size: 1rem;
+  font-weight: var(--fw-strong);
+  cursor: pointer;
+}
+.rest-btn:focus-visible { outline: 3px solid #0072aa; outline-offset: 2px; }
+.bottom-actions.col .rest-btn { flex: 0 1 auto; width: 100%; }
+
+/* 잠시 쉬기 화면 */
+.pause-screen { height: 100%; padding: clamp(110px, 16vh, 170px) 24px 40px; text-align: center; }
+.breathe {
+  width: 120px;
+  height: 120px;
+  margin: 0 auto 26px;
+  border-radius: 50%;
+  background: radial-gradient(circle, #BFE0F2 0%, #EAF5FB 70%);
+  animation: breathe 8s ease-in-out infinite;
+}
+@keyframes breathe { 0%, 100% { transform: scale(0.8); opacity: .7; } 50% { transform: scale(1.15); opacity: 1; } }
+.pause-screen .secondary-action {
+  width: 100%;
+  height: 60px;
+  margin-top: 20px;
+  border: 1.5px solid #d9dee1;
+  border-radius: 100px;
+  background: #fff;
+  color: #222;
+  font-size: 0.9375rem;
+  font-weight: var(--fw-strong);
+  cursor: pointer;
+}
+.staff-reassure { margin: 22px 0 0; color: #1E6FA8; font-size: 0.875rem; font-weight: var(--fw-strong); line-height: 1.7; }
+
+/* 전환 부드럽게 — 화면 간 갑작스러운 변화 없이 페이드 */
+html.simple-steps .screen { animation: calm-fade 0.45s ease; }
+html.simple-steps .confirm-overlay { animation: calm-fade 0.3s ease; }
+@keyframes calm-fade { from { opacity: 0; } to { opacity: 1; } }
 
 .title-lg {
   margin: 16px 0 0;
@@ -643,6 +804,8 @@ html.high-contrast .auth-switch { color: #ccc; }
 html.high-contrast h1, html.high-contrast .title-lg, html.high-contrast .qr-title,
 html.high-contrast .keypad-head h1, html.high-contrast .keypad-value,
 html.high-contrast .completion-screen h1 { color: #fff; }
+html.high-contrast .qr-subtitle { color: #fff; }
+html.high-contrast .qr-box { background: #fff; border: 1.5px solid #fff; }
 
 html.high-contrast .option-card, html.high-contrast .q-card, html.high-contrast .info-card,
 html.high-contrast .dept-card, html.high-contrast .login-field, html.high-contrast .back-link,
@@ -675,6 +838,22 @@ html.high-contrast .progress .active { background: #fff; }
 html.high-contrast .staff-panel { border: 1.5px solid #fff; }
 html.high-contrast .directions { color: #fff; }
 html.high-contrast .directions span { background: #fff; color: #000; }
+html.high-contrast .directions li .dir-ico { background: #fff; color: #000; }
+html.high-contrast .map-ico { background: #fff; border-color: #fff; color: #000; }
 html.high-contrast .map-start, html.high-contrast .map-end, html.high-contrast .map-badge { color: #fff; }
 html.high-contrast .field-hint { color: #ff8a75; }
 html.high-contrast .auto-return-note { color: #fff; }
+html.high-contrast .confirm-overlay { background: rgb(0 0 0 / 80%); }
+html.high-contrast .confirm-panel { background: #000; border: 1.5px solid #fff; color: #fff; }
+html.high-contrast .confirm-panel h2 { color: #fff; }
+html.high-contrast .confirm-close { color: #fff; }
+html.high-contrast .back-link-text { color: #fff; }
+html.high-contrast .confirm-no { background: #000; border-color: #fff; color: #fff; }
+html.high-contrast .confirm-note { color: #ddd; }
+html.high-contrast .confirm-yes { background: #fff; border-color: #fff; color: #000; }
+html.high-contrast .cancel-icon { background: #fff; color: #000; }
+html.high-contrast .pill-calm { background: #fff; color: #000; }
+html.high-contrast .calm-note { color: #fff; }
+html.high-contrast .rest-btn { background: #000; border-color: #fff; color: #fff; }
+html.high-contrast .staff-reassure { color: #fff; }
+html.high-contrast .breathe { background: radial-gradient(circle, #666 0%, #222 70%); }
