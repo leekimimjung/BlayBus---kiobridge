@@ -1,7 +1,7 @@
 // collectProfile 브라우저 데모 부트스트랩.
 // collectProfile.demo.js(컴파일된 모듈)로 정보를 모은 뒤,
 // 수집 화면 대신 "해당 진료과 안내 → 대기 번호 발급" 화면으로 이어집니다.
-import { collectProfile, pauseScreenHTML, renderDepartmentScreen, BACK } from "./collectProfile.demo.js";
+import { collectProfile, pauseScreenHTML, renderDepartmentScreen, BACK, heroMarkSvg } from "./collectProfile.demo.js";
 
 const root = document.querySelector("#app");
 
@@ -35,9 +35,65 @@ const DEPARTMENT_NAMES = {
   UNSPECIFIED: "일반안내 데스크",
 };
 
+/** 층별 진료과 위치 · 도보 시간 안내 데이터. 화면(페르소나)별 분기 없이 이 표만으로 지도를 그립니다. */
+const FLOOR_DEPARTMENTS = {
+  1: [
+    { id: "INTERNAL_MEDICINE", minutes: 2 },
+    { id: "NEUROLOGY", minutes: 3 },
+    { id: "PSYCHIATRY", minutes: 2 },
+  ],
+  2: [
+    { id: "SURGERY", minutes: 3 },
+    { id: "ORTHOPEDICS", minutes: 4 },
+    { id: "OBSTETRICS_AND_GYNECOLOGY", minutes: 3 },
+  ],
+  3: [
+    { id: "PEDIATRICS", minutes: 4 },
+    { id: "OPHTHALMOLOGY", minutes: 5 },
+  ],
+  4: [
+    { id: "ENT", minutes: 5 },
+    { id: "DERMATOLOGY", minutes: 6 },
+  ],
+};
+
+/** departmentId → { floor, minutes }. 목록에 없는 과(영상의학과·건강검진센터·일반안내)는 undefined — 안내데스크로 폴백. */
+const DEPARTMENT_LOCATION = Object.fromEntries(
+  Object.entries(FLOOR_DEPARTMENTS).flatMap(([floor, list]) =>
+    list.map((dept) => [dept.id, { floor: Number(floor), minutes: dept.minutes }]),
+  ),
+);
+
+const MAP_PIN_SLOTS = ["top-left", "top-right", "bottom-right"];
+
+/** 선택한 진료과가 있는 층의 길찾기 지도(핀 + 선). 데이터가 없는 과는 null(호출부에서 폴백 처리). */
+function floorMapHTML(departmentId) {
+  const location = DEPARTMENT_LOCATION[departmentId];
+  if (!location) return null;
+  const peers = FLOOR_DEPARTMENTS[location.floor];
+  const pins = peers
+    .map((dept, index) => {
+      const slot = MAP_PIN_SLOTS[index];
+      const isTarget = dept.id === departmentId;
+      return `<span class="map-pin map-pin-${slot}${isTarget ? " is-target" : ""}">
+        <small>${departmentName(dept.id)}(${location.floor}층)</small>
+        <strong>${dept.minutes}분</strong>
+      </span>`;
+    })
+    .join("");
+  const lines = peers
+    .map((_, index) => `<span class="map-line map-line-${MAP_PIN_SLOTS[index]}"></span>`)
+    .join("");
+  return `
+    <div class="map-grid"></div>
+    ${lines}
+    ${pins}
+    <span class="map-start">${location.floor}층<br />현재 위치</span>`;
+}
+
 const headerHTML = () => `
   <header class="status-bar">
-    <div class="brand"><span class="brand-mark"></span><strong>은빛 병원</strong></div>
+    <div class="brand"><span class="brand-mark">${heroMarkSvg}</span><strong>은빛 병원</strong></div>
     <div class="clock"><small>6월 15일</small> <strong>3:36</strong></div>
   </header>`;
 
@@ -116,7 +172,7 @@ function openConfirm({ title, noLabel, yesLabel, onNo, onYes, onClose }) {
 function renderRoute(raw, onTicket) {
   const departmentId = raw.departmentId;
   const name = departmentName(departmentId);
-  const short = departmentId === "UNSPECIFIED" ? "일반안내" : name.replace("센터", "");
+  const location = DEPARTMENT_LOCATION[departmentId];
   const voice = !!raw.VOICE_GUIDANCE;
   const visual = !!raw.VISUAL_GUIDANCE;
   const staff = !!raw.STAFF_HELP;
@@ -128,7 +184,9 @@ function renderRoute(raw, onTicket) {
     ? [step("1", "지금 자리에서 기다려 주시면 직원이 찾아올게요", "help"), step("2", "직원이 진료과 접수까지 도와드릴게요", "desk")]
     : departmentId === "UNSPECIFIED"
       ? [step("1", "로비 안내데스크로 이동", "lobby"), step("2", "직원이 접수부터 도와드릴게요", "desk")]
-      : [step("1", "엘리베이터로 3층 이동", "elevator"), step("2", `${name} 접수 데스크`, "desk")];
+      : location
+        ? [step("1", `엘리베이터로 ${location.floor}층 이동`, "elevator"), step("2", `${name} 접수 데스크`, "desk")]
+        : [step("1", "안내데스크에서 위치를 확인해 드릴게요", "desk")];
   const pills = [
     voice ? '<span class="pill pill-voice">음성 안내 모드</span>' : "",
     visual ? '<span class="pill pill-visual">시각 안내 모드</span>' : "",
@@ -140,6 +198,11 @@ function renderRoute(raw, onTicket) {
     visual ? `<span class="map-ico map-ico-desk">${picto("desk")}</span>` : "",
     visual && !staff ? `<span class="map-ico map-ico-elevator">${picto("elevator")}</span>` : "",
   ].filter(Boolean).join("");
+  const floorMap = floorMapHTML(departmentId);
+  const mapFallback = `
+    <div class="map-grid"></div>
+    <span class="map-start">1층<br />현재 위치</span>
+    <span class="map-pin map-pin-top-right is-target"><small>${name}</small><strong>안내데스크 문의</strong></span>`;
   root.innerHTML = `
     ${headerHTML()}
     <div class="page">
@@ -147,12 +210,9 @@ function renderRoute(raw, onTicket) {
       <section class="screen form-screen route-screen cp-screen">
         ${pills ? `<div class="pill-row">${pills}</div>` : ""}
         <h1 class="title-lg">${name}까지<br />안내해 드릴게요</h1>
-        <div class="map" role="img" aria-label="병원 3층 ${name} 안내 지도">
-          <div class="map-grid"></div><div class="route-line"></div>
+        <div class="map" role="img" aria-label="병원 ${location ? `${location.floor}층 ` : ""}${name} 안내 지도">
+          ${floorMap ?? mapFallback}
           ${mapIcons}
-          <span class="map-start">1층<br />현재 위치</span>
-          <span class="map-end">${short}<br /></span>
-          <span class="map-badge">소요<br /><strong>3분</strong></span>
         </div>
         <ol class="directions">${steps.join("")}</ol>
       </section>

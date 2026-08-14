@@ -47,7 +47,8 @@ button { font: inherit; }
   background: #fff;
 }
 .brand, .clock { display: flex; align-items: center; gap: 6px; font-size: 0.8125rem; }
-.brand-mark { width: 23px; height: 23px; border-radius: 5px; background: #edf0f1; }
+.brand-mark { width: 23px; height: 23px; border-radius: 5px; background: #edf0f1; display: grid; place-items: center; overflow: hidden; }
+.brand-mark svg { width: 68%; height: 68%; display: block; }
 .clock small { font-size: 0.5625rem; font-weight: var(--fw-medium); }
 .clock strong { font-size: 1.0625rem; }
 
@@ -281,12 +282,14 @@ h1 em { color: #0578a6; font-style: normal; }
 }
 .hero-mark {
   width: min(48vw, 205px);
+  aspect-ratio: 1;
   display: grid;
   place-items: center;
-  color: var(--brand);
-  font-size: clamp(120px, 42vw, 220px);
-  font-weight: var(--fw-strong);
-  line-height: 1;
+}
+.hero-mark svg {
+  width: 100%;
+  height: 100%;
+  display: block;
 }
 .camera-caption { margin-top: 14px; color: #000; font-size: 1.25rem; font-weight: var(--fw-medium); }
 .auth-panel {
@@ -321,12 +324,18 @@ h1 em { color: #0578a6; font-style: normal; }
   background: #fff;
 }
 .map-grid { position: absolute; inset: 18px; opacity: .72; background: repeating-linear-gradient(90deg,#d4d5d4 0 1px,transparent 1px 58px), repeating-linear-gradient(0deg,#d4d5d4 0 1px,transparent 1px 47px); }
-.route-line { position: absolute; left: 105px; top: 62%; width: 190px; height: 5px; border-radius: 9px; background: #148eb7; transform: rotate(-25deg); }
-.map-start, .map-end { position: absolute; padding: 6px; border-radius: 5px; color: #fff; background: #148eb7; font-size: 0.5rem; text-align: center; }
-.map-start { left: 65px; bottom: 28px; }
-.map-end { right: 78px; top: 28px; }
-.map-badge { position: absolute; right: 16px; top: 24px; width: 75px; height: 75px; display: grid; place-content: center; border-radius: 50%; color: #fff; background: var(--brand); text-align: center; font-size: 0.625rem; box-shadow: 0 4px 12px #7f8e95; }
-.map-badge strong { font-size: 1.125rem; }
+.map-line { position: absolute; background: #148eb7; border-radius: 9px; }
+.map-line-top-left { left: 68px; top: 88px; bottom: 60px; width: 3px; }
+.map-line-top-right { left: 105px; top: 62%; width: 190px; height: 5px; transform: rotate(-25deg); }
+.map-line-bottom-right { left: 100px; right: 95px; bottom: 44px; height: 3px; }
+.map-start { position: absolute; left: 65px; bottom: 28px; padding: 6px; border-radius: 5px; color: #fff; background: #148eb7; font-size: 0.5rem; text-align: center; }
+.map-pin { position: absolute; width: 68px; height: 68px; padding: 5px; display: grid; place-content: center; border-radius: 50%; color: #fff; background: var(--brand); text-align: center; box-shadow: 0 4px 12px #7f8e95; }
+.map-pin small { display: block; font-size: 0.4375rem; line-height: 1.1; margin-bottom: 2px; overflow-wrap: break-word; }
+.map-pin strong { font-size: 0.9375rem; }
+.map-pin.is-target { width: 80px; height: 80px; background: #0a3350; box-shadow: 0 0 0 3px #fff, 0 4px 12px #7f8e95; }
+.map-pin-top-left { left: 38px; top: 24px; }
+.map-pin-top-right { right: 16px; top: 24px; }
+.map-pin-bottom-right { right: 16px; bottom: 28px; }
 .directions { margin: 14px 0 0; padding: 0; display: grid; gap: 12px; list-style: none; }
 .directions li {
   padding: 18px 20px;
@@ -639,8 +648,8 @@ html.high-contrast .auto-return-note { color: #fff; }
   box-shadow: 0 2px 6px rgb(0 0 0 / 18%);
 }
 .map-ico svg { width: 22px; height: 22px; }
-.map-ico-elevator { left: 150px; top: 46%; }
-.map-ico-desk { right: 60px; top: 54px; }
+.map-ico-elevator { left: 130px; top: 38%; }
+.map-ico-desk { left: 190px; top: 54%; }
 .map-ico-help { left: 44px; top: 62%; }
 
 /* 공황장애(SIMPLE_STEPS) 모드 — 차분한 안내 */
@@ -840,7 +849,7 @@ html.high-contrast .directions { color: #fff; }
 html.high-contrast .directions span { background: #fff; color: #000; }
 html.high-contrast .directions li .dir-ico { background: #fff; color: #000; }
 html.high-contrast .map-ico { background: #fff; border-color: #fff; color: #000; }
-html.high-contrast .map-start, html.high-contrast .map-end, html.high-contrast .map-badge { color: #fff; }
+html.high-contrast .map-start, html.high-contrast .map-pin { color: #fff; }
 html.high-contrast .field-hint { color: #ff8a75; }
 html.high-contrast .auto-return-note { color: #fff; }
 html.high-contrast .confirm-overlay { background: rgb(0 0 0 / 80%); }

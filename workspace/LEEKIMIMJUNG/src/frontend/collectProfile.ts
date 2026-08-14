@@ -98,7 +98,7 @@ export const VISIT_TYPES = [
 
 const header = () => `
   <header class="status-bar">
-    <div class="brand"><span class="brand-mark"></span><strong>은빛 병원</strong></div>
+    <div class="brand"><span class="brand-mark">${heroMarkSvg}</span><strong>은빛 병원</strong></div>
     <div class="clock"><small>6월 15일</small> <strong>3:36</strong></div>
   </header>`;
 
@@ -204,6 +204,18 @@ const staffIconSmall = `
     <path d="M18 16.5c0 .6-.5 1-1 1a13 13 0 0 1-9.3-3.8A13 13 0 0 1 4 4.5c0-.5.4-1 1-1h2.2c.5 0 .9.3 1 .8l.8 3c.1.5 0 .9-.3 1.2l-1.1 1.1a10.4 10.4 0 0 0 4 4l1.1-1.1c.3-.3.7-.4 1.2-.3l3 .8c.5.1.8.5.8 1V16.5z" fill="#868686"/>
   </svg>`;
 
+/** 웰컴 화면 로고 — 모서리가 접힌 "H" 마크. 브랜드 색상 토큰(--brand) 재사용. */
+const heroMarkSvg = `
+  <svg viewBox="0 0 300 300" role="img" aria-hidden="true" focusable="false">
+    <defs>
+      <filter id="heroShadow" x="-50%" y="-50%" width="200%" height="200%">
+        <feDropShadow dx="5" dy="0" stdDeviation="3" flood-opacity="0.2"/>
+      </filter>
+    </defs>
+    <rect x="50" y="40" width="45" height="220" fill="var(--brand)" rx="3" filter="url(#heroShadow)"/>
+    <path d="M 205 60 L 250 40 L 250 260 L 205 260 L 205 180 L 95 180 L 95 135 L 205 135 Z" fill="var(--brand)" filter="url(#heroShadow)"/>
+  </svg>`;
+
 /** 직원 호출 안내 오버레이 — 로그인 화면에서 "직원을 호출해주세요"를 누르면 표시됩니다. */
 export const staffAlertOverlayHTML = () => `
   <div class="staff-overlay" role="dialog" aria-modal="true" aria-label="직원 호출 안내">
@@ -219,7 +231,7 @@ export const staffAlertOverlayHTML = () => `
 export function loginChoiceScreenHTML(): string {
   return `
   <section class="screen welcome-screen">
-    <div class="hero-mark" aria-hidden="true">H</div>
+    <div class="hero-mark" aria-hidden="true">${heroMarkSvg}</div>
     <p class="camera-caption">“안아프게 해 드릴게요”</p>
     <div class="auth-panel">
       <button type="button" class="auth-login" data-choice="auth">로그인 / 회원가입 하기</button>
