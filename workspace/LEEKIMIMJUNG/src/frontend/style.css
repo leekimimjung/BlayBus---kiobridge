@@ -652,6 +652,7 @@ html.high-contrast .auto-return-note { color: #fff; }
 .pill-acc { background: var(--acc-bg); color: var(--acc-ink); }
 .pill-visual { background: #F0E8F6; color: #6A2B8F; }
 .pill-staff { background: #FFE9E4; color: #C4432E; }
+.pill-warn { background: #FFF3D6; color: #8A6116; }
 
 /* 시각 안내 모드 — 방향 단계·지도 위 픽토그램 */
 .directions li .dir-ico {
@@ -894,6 +895,7 @@ html.high-contrast .confirm-note { color: #ddd; }
 html.high-contrast .confirm-yes { background: #fff; border-color: #fff; color: #000; }
 html.high-contrast .cancel-icon { background: #fff; color: #000; }
 html.high-contrast .pill-calm { background: #fff; color: #000; }
+html.high-contrast .pill-warn { background: #fff; color: #000; border: 1.5px solid #000; }
 html.high-contrast .calm-note { color: #fff; }
 html.high-contrast .rest-btn { background: #000; border-color: #fff; color: #fff; }
 html.high-contrast .staff-reassure { color: #fff; }
