@@ -838,7 +838,24 @@ async function renderDepartmentScreen(settings: AccessibilityState = {}, initial
   });
 }
 
-/** 위 화면들에서 모은 값을 하나의 RawUserInput 객체로 합치기 */
+/**
+ * 화면의 접근성 설정(UPPER_SNAKE_CASE 키)을 공식 supportModes enum 값 배열로 바꿉니다.
+ * STEP3(createSessionContext)의 preferences.supportModes 가 이 형태를 기대합니다.
+ * HIGH_CONTRAST·EASY_MODE·VOICE_GUIDANCE 는 공식 supportModes enum에 없는 값이라 뺍니다
+ * (docs/ENUM_REFERENCE.md 의 6개: LARGE_TEXT/HEARING_SUPPORT/VISUAL_GUIDANCE/SIMPLE_STEPS/STAFF_HELP/GUARDIAN_MODE).
+ */
+function toSupportModes(accessibility: AccessibilityState): string[] {
+  const OFFICIAL_SUPPORT_MODE_KEYS = ["LARGE_TEXT", "VISUAL_GUIDANCE", "SIMPLE_STEPS", "STAFF_HELP", "GUARDIAN_MODE"] as const;
+  return OFFICIAL_SUPPORT_MODE_KEYS.filter((key) => !!accessibility[key]);
+}
+
+/**
+ * 위 화면들에서 모은 값을 하나의 RawUserInput 객체로 합치기.
+ * 🚨 STEP2(mapToCanonicalInput)·STEP3(createSessionContext)는 이 함수가 만드는 필드 이름
+ * (largeText, supportModes, canUseSelfCheckIn 등)을 그대로 읽습니다 — 화면의 UPPER_SNAKE_CASE
+ * 설정 키(LARGE_TEXT 등)를 그 필드로 반드시 옮겨 담아야 실제로 반영됩니다. 그냥 스프레드만
+ * 하면(...accessibility) STEP2/3가 기대하는 키와 이름이 달라서 조용히 빈 값으로 넘어갑니다.
+ */
 export function assembleRawInput(parts: {
   loginChoice?: { loggedIn: boolean; auth: string };
   accessibility: AccessibilityState;
@@ -846,17 +863,39 @@ export function assembleRawInput(parts: {
   visitType: string;
   departmentId: string;
 }): RawUserInput {
+  const a = parts.accessibility;
   return {
     ...(parts.loginChoice ? { loggedIn: parts.loginChoice.loggedIn, auth: parts.loginChoice.auth } : {}),
-    ...parts.accessibility,
-    guardianPresent: !!parts.accessibility["GUARDIAN_MODE"],
+    ...a,
+    guardianPresent: !!a["GUARDIAN_MODE"],
     appointmentStatus: parts.appointmentStatus,
     visitType: parts.visitType,
     // 제출용 departmentId 는 공식 enum 으로 정규화하고,
     // 화면에서 고른 진료과(departmentDisplayId)는 데모 길안내/재선택에 그대로 씁니다.
     departmentId: toOfficialDepartmentId(parts.departmentId),
     departmentDisplayId: parts.departmentId,
-    // STEP 2 가 fieldMetadata 를 채울 때 쓸 수 있도록 수집 메타 정보를 남깁니다.
+
+    // ── STEP2(mapToCanonicalInput)가 읽는 camelCase 필드 ──
+    largeText: !!a["LARGE_TEXT"],
+    simpleSteps: !!a["SIMPLE_STEPS"],
+    visualGuidance: !!a["VISUAL_GUIDANCE"],
+    staffAssistancePreferred: !!a["STAFF_HELP"],
+    highContrast: !!a["HIGH_CONTRAST"],
+    // 청각 지원(HEARING_SUPPORT)·이동 지원(mobilitySupport)은 화면에 아직 해당 설정이 없어 항상 false —
+    // 접근성 설정 화면에 토글이 추가되면 여기도 함께 채워야 함.
+    hearingSupport: false,
+    mobilitySupport: false,
+    preferredInput: "TOUCH",
+    personalization: false,
+
+    // ── STEP3(createSessionContext, hospital)가 읽는 필드 ──
+    supportModes: toSupportModes(a),
+    // 웹폼으로 여기까지 왔다는 것 자체가 셀프 체크인이 가능하다는 뜻이므로 확정값으로 넘김
+    // (미지정 시 confidence 0.5로 처리되어 매번 재확인 오류가 남).
+    canUseSelfCheckIn: true,
+    inputChannel: "WEB_FORM",
+
+    // STEP 2/3 가 fieldMetadata 를 채울 때 쓸 수 있도록 수집 메타 정보를 남깁니다.
     _confirmedByUser: true,
     _collectedVia: "WEB_FORM",
   };

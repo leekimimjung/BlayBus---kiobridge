@@ -46,7 +46,10 @@ export function buildExecutionPlan(
   const rec: any = _rec;
   const fixture: any = _fixture;
   const emptyPlan: any = {
-    planId: `PLAN-${Date.now()}`,
+    // Date.now()를 10진수 그대로 쓰면 13자리 순수 숫자열이 되어, 우연히 주민등록번호
+    // 형식 정규식(\d{6}[-\s]?[1-4]\d{6})과 일치해 PERSONAL_DATA_NOT_ALLOWED 오검출이 남 —
+    // 36진수로 바꿔 숫자만 이어지는 구간을 없앰.
+    planId: `PLAN-${Date.now().toString(36)}`,
     validationMode: "SIMULATION_ONLY",
     executionEnvironment: "DIGITAL_TWIN",
     actualDeviceCommandSent: false,
@@ -217,7 +220,10 @@ export function buildExecutionPlan(
   }
 
   return {
-    planId: `PLAN-${Date.now()}`,
+    // Date.now()를 10진수 그대로 쓰면 13자리 순수 숫자열이 되어, 우연히 주민등록번호
+    // 형식 정규식(\d{6}[-\s]?[1-4]\d{6})과 일치해 PERSONAL_DATA_NOT_ALLOWED 오검출이 남 —
+    // 36진수로 바꿔 숫자만 이어지는 구간을 없앰.
+    planId: `PLAN-${Date.now().toString(36)}`,
     validationMode: "SIMULATION_ONLY",
     executionEnvironment: "DIGITAL_TWIN",
     actualDeviceCommandSent: false,
