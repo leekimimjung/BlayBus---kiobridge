@@ -352,6 +352,32 @@ test("assembleRawInput: 로그인 여부와 화면 값을 하나로 합치고 �
   assert.equal(raw._collectedVia, "WEB_FORM");
 });
 
+test("assembleRawInput: STEP2(mapToCanonicalInput)가 읽는 camelCase 필드로도 옮겨 담는다", () => {
+  const raw = assembleRawInput({
+    accessibility: { LARGE_TEXT: true, VISUAL_GUIDANCE: true, STAFF_HELP: true, HIGH_CONTRAST: true },
+    appointmentStatus: "HAS_APPOINTMENT",
+    visitType: "FIRST_VISIT",
+    departmentId: "ORTHOPEDICS",
+  });
+  assert.equal(raw.largeText, true);
+  assert.equal(raw.visualGuidance, true);
+  assert.equal(raw.staffAssistancePreferred, true);
+  assert.equal(raw.highContrast, true);
+  assert.equal(raw.simpleSteps, false);
+  assert.equal(raw.preferredInput, "TOUCH");
+});
+
+test("assembleRawInput: STEP3(createSessionContext)가 읽는 supportModes 배열·canUseSelfCheckIn을 채운다", () => {
+  const raw = assembleRawInput({
+    accessibility: { LARGE_TEXT: true, STAFF_HELP: true, GUARDIAN_MODE: true, HIGH_CONTRAST: true, EASY_MODE: true },
+    appointmentStatus: "HAS_APPOINTMENT",
+    visitType: "FIRST_VISIT",
+    departmentId: "ORTHOPEDICS",
+  });
+  assert.deepEqual(raw.supportModes, ["LARGE_TEXT", "STAFF_HELP", "GUARDIAN_MODE"]);
+  assert.equal(raw.canUseSelfCheckIn, true);
+});
+
 test("assembleRawInput: loginChoice 없이도 동작한다 (비회원 경로)", () => {
   const raw = assembleRawInput({
     accessibility: { fontScale: "NORMAL" },
