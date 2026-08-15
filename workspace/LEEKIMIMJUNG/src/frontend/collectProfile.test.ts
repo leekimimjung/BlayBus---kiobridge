@@ -14,6 +14,7 @@ import {
   collectProfile,
   departmentChoiceHTML,
   departmentListScreenHTML,
+  deviceProfileConfirmOverlayHTML,
   loginChoiceScreenHTML,
   pauseScreenHTML,
   proceedConfirmOverlayHTML,
@@ -21,6 +22,7 @@ import {
   reservationScreenHTML,
   visitTypeScreenHTML,
 } from "./collectProfile.ts";
+import { buildMockQrPayload } from "./deviceProfile.ts";
 
 test("메인 화면: 병원 이니셜(H) + 로그인/회원가입 · 비회원 시작 · 직원 호출 링크", () => {
   const html = loginChoiceScreenHTML();
@@ -46,6 +48,29 @@ test("QR 로그인/회원가입 화면: 돌아가기 · 완료 버튼 · QR 인�
   assert.doesNotMatch(html, /직원 호출/);
 });
 
+test("QR 화면: 스캔 전에는 '완료'가 비활성, 예시 QR을 읽으면(data-action=qr-scan) 페이로드를 보여주고 '완료'가 활성화된다", () => {
+  const before = qrAuthScreenHTML();
+  assert.match(before, /data-action="qr-scan"/);
+  assert.match(before, /disabled/);
+  assert.doesNotMatch(before, /qr-payload/);
+
+  const payload = buildMockQrPayload();
+  const after = qrAuthScreenHTML(payload);
+  assert.doesNotMatch(after, /disabled/);
+  assert.match(after, /qr-payload/);
+  assert.match(after, new RegExp(payload.sessionNonce));
+});
+
+test("Mock QR 페이로드: 환경 ID·fixture 버전·일회용 nonce만 담고 개인정보는 없다", () => {
+  const payload = buildMockQrPayload();
+  assert.equal(payload.environmentId, "hospital");
+  assert.equal(payload.fixtureVersion, "hospital@0.2.0");
+  assert.ok(payload.sessionNonce.length > 0);
+  assert.deepEqual(Object.keys(payload).sort(), ["environmentId", "fixtureVersion", "sessionNonce"]);
+  const other = buildMockQrPayload();
+  assert.notEqual(payload.sessionNonce, other.sessionNonce);
+});
+
 test("나에게 맞는 설정: 글씨크기/음성안내/시각안내/보호자/고대비/쉬운모드/공황장애/직원도움 8개 복수 선택, 최소 1개 선택해야 완료 활성", () => {
   assert.equal(ACCESSIBILITY_SETTINGS.length, 8);
   assert.ok(ACCESSIBILITY_SETTINGS.some((s) => s.key === "LARGE_TEXT" && /글씨/.test(s.title)));
@@ -59,6 +84,39 @@ test("나에게 맞는 설정: 글씨크기/음성안내/시각안내/보호자/
 
   assert.match(accessibilityScreenHTML({}), /disabled/);
   assert.doesNotMatch(accessibilityScreenHTML({ LARGE_TEXT: true }), /disabled/);
+});
+
+test("기기 저장 토글: 기본값은 꺼짐이고, 켜면 선택 표시가 되며, 저장된 설정이 있을 때만 '지우기' 버튼이 보인다", () => {
+  const off = accessibilityScreenHTML({ LARGE_TEXT: true });
+  assert.match(off, /이 기기에 설정 저장하기/);
+  assert.match(off, /data-action="toggle-save"/);
+  assert.match(off, /aria-pressed="false"/);
+  assert.doesNotMatch(off, /data-action="forget-device"/);
+
+  const on = accessibilityScreenHTML({ LARGE_TEXT: true }, false, false, true, true);
+  assert.match(on, /aria-pressed="true"/);
+  assert.match(on, /data-action="forget-device"/);
+  assert.match(on, /저장된 설정 지우기/);
+});
+
+test("기기 저장 지우기: 지운 직후에는 '지웠습니다' 안내 문구를 보여준다", () => {
+  const justForgot = accessibilityScreenHTML({}, false, false, false, false, true);
+  assert.match(justForgot, /이 기기에 저장된 설정을 지웠습니다/);
+  assert.doesNotMatch(accessibilityScreenHTML({}), /지웠습니다/);
+});
+
+test("저장된 설정 불러오기 확인 모달: 저장일과 켜진 설정을 보여주고, 조용히 적용하지 않고 확인을 받는다", () => {
+  const html = deviceProfileConfirmOverlayHTML({
+    settings: { LARGE_TEXT: true, SIMPLE_STEPS: true },
+    savedAt: "2026-08-01T00:00:00.000Z",
+  });
+  assert.match(html, /이 기기에 저장된/);
+  assert.match(html, /2026-08-01/);
+  assert.match(html, /글씨 크기/);
+  assert.match(html, /공황장애를 겪고 있어요/);
+  assert.match(html, /data-action="confirm-yes"/);
+  assert.match(html, /data-action="confirm-no"/);
+  assert.match(html, /공용 기기라면 이전 사람의 설정일 수 있어요/);
 });
 
 test("로그인 여부: 같은 설정 화면에서 제목만 바뀐다 — 비회원은 '편하신 방식을 골라주세요', 로그인은 '전에 하신 설정이 맞는지 확인해 주세요'", () => {
@@ -283,4 +341,11 @@ test("collectProfile: 브라우저 DOM 이 없는 Node 에서 멈추지 않고 �
     const msg = String((err as Error).message);
     return !msg.startsWith("NOT_IMPLEMENTED") && /DOM/.test(msg);
   });
+});
+
+test("기기 내 프로필 저장소: 브라우저(window/localStorage)가 없는 Node에서는 조용히 실패하고 멈추지 않는다", async () => {
+  const { loadDeviceProfile, saveDeviceProfile, clearDeviceProfile } = await import("./deviceProfile.ts");
+  assert.equal(loadDeviceProfile(), null);
+  assert.equal(saveDeviceProfile({ LARGE_TEXT: true }), false);
+  assert.doesNotThrow(() => clearDeviceProfile());
 });
