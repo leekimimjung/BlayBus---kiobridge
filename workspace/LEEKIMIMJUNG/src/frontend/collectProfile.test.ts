@@ -217,28 +217,24 @@ test("진료과(추천) 화면: 진행 단계가 5칸이고 직원 호출 버튼
   assert.doesNotMatch(html, /data-action="staff"/);
 });
 
-test("진료과 직접 선택: '다른 진료과'는 10개 선택지(내과·신경과·정신건강의학과·외과·정형외과·산부인과·소아청소년과·안과·이비인후과·피부과)를 보여준다", () => {
-  assert.equal(DEPARTMENTS.length, 10);
+test("진료과 직접 선택: '다른 진료과'는 공식 departmentId enum 6개(내과·정형외과·이비인후과·영상의학과·건강검진센터·잘 모르겠어요)만 보여준다", () => {
+  assert.equal(DEPARTMENTS.length, 6);
   const titles = DEPARTMENTS.map((d) => d.title);
   assert.deepEqual(titles, [
     "내과",
-    "신경과",
-    "정신건강의학과",
-    "외과",
     "정형외과",
-    "산부인과",
-    "소아청소년과",
-    "안과",
     "이비인후과",
-    "피부과",
+    "영상의학과",
+    "건강검진센터",
+    "잘 모르겠어요 (일반 안내)",
   ]);
 });
 
-test("진료과 직접 선택 화면: 10개 목록을 모두 렌더링하고 증상을 묻지 않는다", () => {
+test("진료과 직접 선택 화면: 6개 목록을 모두 렌더링하고 증상을 묻지 않는다", () => {
   const html = departmentListScreenHTML("");
   for (const d of DEPARTMENTS) {
     assert.match(html, new RegExp(`data-value="${d.value}"`));
-    assert.match(html, new RegExp(d.title));
+    assert.ok(html.includes(d.title));
   }
   assert.match(html, /진료과를/);
   assert.match(html, /data-action="back"/);
