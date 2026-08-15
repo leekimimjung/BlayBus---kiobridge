@@ -97,7 +97,37 @@ h1 em { color: #0578a6; font-style: normal; }
   aspect-ratio: 1;
   border-radius: 40px;
   background: #dfe4e8;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  color: #3a3f47;
+  font-size: 0.8125rem;
+  font-weight: var(--fw-strong);
 }
+.qr-box:focus-visible { outline: 3px solid var(--brand-line); outline-offset: 3px; }
+.qr-payload {
+  margin: 20px auto 0;
+  max-width: 688px;
+  background: #0f1720;
+  color: #d7e2e8;
+  padding: 14px 16px;
+  border-radius: 12px;
+  font-size: 0.7rem;
+  line-height: 1.5;
+  text-align: left;
+  white-space: pre-wrap;
+  overflow-x: auto;
+}
+.qr-note { margin: 12px 0 0; color: #6f7b84; font-size: 0.7rem; text-align: center; line-height: 1.5; }
+
+/* 기기 내 접근성 설정 저장 (무로그인 QR 프로필) */
+.device-save-row { margin-top: 18px; display: grid; gap: 10px; }
+.device-save-row .secondary-action.wide { flex: 1; width: 100%; }
+.device-forget-note { margin: 0; color: #3681a8; font-size: 0.75rem; font-weight: var(--fw-strong); }
 
 .options { display: grid; gap: 12px; margin-top: 28px; }
 .options.compact { gap: 14px; margin-top: 24px; }
@@ -622,6 +652,7 @@ html.high-contrast .auto-return-note { color: #fff; }
 .pill-acc { background: var(--acc-bg); color: var(--acc-ink); }
 .pill-visual { background: #F0E8F6; color: #6A2B8F; }
 .pill-staff { background: #FFE9E4; color: #C4432E; }
+.pill-warn { background: #FFF3D6; color: #8A6116; }
 
 /* 시각 안내 모드 — 방향 단계·지도 위 픽토그램 */
 .directions li .dir-ico {
@@ -824,7 +855,9 @@ html.high-contrast h1, html.high-contrast .title-lg, html.high-contrast .qr-titl
 html.high-contrast .keypad-head h1, html.high-contrast .keypad-value,
 html.high-contrast .completion-screen h1 { color: #fff; }
 html.high-contrast .qr-subtitle { color: #fff; }
-html.high-contrast .qr-box { background: #fff; border: 1.5px solid #fff; }
+html.high-contrast .qr-box { background: #fff; border: 1.5px solid #fff; color: #000; }
+html.high-contrast .qr-payload { background: #000; color: #fff; border: 1.5px solid #fff; }
+html.high-contrast .qr-note, html.high-contrast .device-forget-note { color: #fff; }
 
 html.high-contrast .option-card, html.high-contrast .q-card, html.high-contrast .info-card,
 html.high-contrast .dept-card, html.high-contrast .login-field, html.high-contrast .back-link,
@@ -872,6 +905,7 @@ html.high-contrast .confirm-note { color: #ddd; }
 html.high-contrast .confirm-yes { background: #fff; border-color: #fff; color: #000; }
 html.high-contrast .cancel-icon { background: #fff; color: #000; }
 html.high-contrast .pill-calm { background: #fff; color: #000; }
+html.high-contrast .pill-warn { background: #fff; color: #000; border: 1.5px solid #000; }
 html.high-contrast .calm-note { color: #fff; }
 html.high-contrast .rest-btn { background: #000; border-color: #fff; color: #fff; }
 html.high-contrast .staff-reassure { color: #fff; }

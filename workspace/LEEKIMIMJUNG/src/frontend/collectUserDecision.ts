@@ -126,6 +126,9 @@ const shell = (content: string) => `${header()}<div class="page">${content}</div
  * @param recommended STEP5(recommend)/STEP6(explainRecommendation)가 실제로 계산한 결과.
  *   생략하면(예: 데모용 미리보기) RECOMMENDED_DEPARTMENT를 기본값으로 씁니다 — 실제 흐름에서는
  *   반드시 renderRecommendationScreen이 진짜 Recommendation을 여기 넘겨야 합니다.
+ * @param uncertain STEP5가 진료과를 확정하지 못해 일반 안내로 보낸 경우(requiresReconfirmation)
+ *   true. 확정 추천처럼 보이면 안 되므로 "추천 정확도 높음" 문구 대신 확인이 필요하다는
+ *   문구를 보여줍니다 — 병원 환경 금지 규칙(증상으로 진료과 자동매칭 금지)과 짝을 이룹니다.
  */
 export function departmentChoiceHTML(
   selected: string,
@@ -137,6 +140,7 @@ export function departmentChoiceHTML(
     floor: "2층 · 정형외과 접수 데스크",
     reasons: [],
   },
+  uncertain = false,
 ): string {
   const voice = !!settings["VOICE_GUIDANCE"];
   const staff = !!settings["STAFF_HELP"];
@@ -144,7 +148,9 @@ export function departmentChoiceHTML(
   const simple = !!settings["SIMPLE_STEPS"];
   const reason = recommended.reasons.length > 0
     ? recommended.reasons.join("<br />") + "<br />다르다면 아래에서 직접 선택할 수 있어요."
-    : "입력하신 정보를 바탕으로 안내해 드려요.<br />다르다면 아래에서 직접 선택할 수 있어요.";
+    : uncertain
+      ? "말씀해주신 내용만으로는 어느 과인지 정하지 않았어요.<br />괜찮으시면 안내데스크에서 확인해 드릴게요."
+      : "입력하신 정보를 바탕으로 안내해 드려요.<br />다르다면 아래에서 직접 선택할 수 있어요.";
   return `
   ${progress(3)}
   <section class="screen form-screen cp-screen">
@@ -153,13 +159,17 @@ export function departmentChoiceHTML(
       ${staff ? '<span class="pill pill-staff">직원 도움 안내</span>' : ""}
       ${visual ? '<span class="pill pill-visual">시각 안내 모드</span>' : ""}
       ${calmPill(simple)}
-      <span class="pill pill-acc">추천 정확도 높음</span>
+      ${uncertain
+        ? '<span class="pill pill-warn">직접 확인이 필요해요</span>'
+        : '<span class="pill pill-acc">추천 정확도 높음</span>'}
       ${backLink(simple)}
     </div>
-    <h1 class="title-lg">${recommended.department}로<br />안내해 드릴게요</h1>
+    <h1 class="title-lg">${uncertain
+      ? "어느 과인지<br />아직 정하지 않았어요"
+      : `${recommended.department}로<br />안내해 드릴게요`}</h1>
     ${calmNote(simple)}
     <div class="q-card">
-      <strong>왜 ${recommended.department}인가요?</strong>
+      <strong>${uncertain ? "어떻게 도와드릴까요?" : `왜 ${recommended.department}인가요?`}</strong>
       <p>${reason}</p>
     </div>
     <button type="button" class="dept-card ${selected === recommended.candidateId ? "is-selected" : ""}" data-group="department" data-value="${recommended.candidateId}">
@@ -167,7 +177,7 @@ export function departmentChoiceHTML(
       <span class="dept-copy">
         <span class="dept-title">${recommended.title}</span>
         <span class="dept-floor">${recommended.floor}</span>
-        <span class="dept-hint">${staff ? "직원이 찾아와서 안내해 드릴게요" : "다음으로 넘어가면 길을 안내해 드려요"}</span>
+        <span class="dept-hint">${staff ? "직원이 찾아와서 안내해 드릴게요" : uncertain ? "안내데스크 직원이 어느 과인지 확인해 드려요" : "다음으로 넘어가면 길을 안내해 드려요"}</span>
       </span>
     </button>
     <button type="button" class="dept-card ${selected === "OTHER" ? "is-selected" : ""}" data-group="department" data-value="OTHER">
@@ -276,10 +286,11 @@ async function renderRecommendationScreen(_rec: Recommendation): Promise<void> {
     floor: display.floor,
     reasons: _rec.recommendationReasons ?? [],
   };
+  const uncertain = !!_rec.requiresReconfirmation;
   return new Promise((resolve) => {
     let selected = recommended.candidateId;
     const draw = () => {
-      mount.innerHTML = shell(departmentChoiceHTML(selected, {}, recommended));
+      mount.innerHTML = shell(departmentChoiceHTML(selected, {}, recommended, uncertain));
       focusFirst(mount);
     };
     function onClick(event: MouseEvent) {
@@ -355,15 +366,20 @@ async function renderAlternativesScreen(
 async function renderApprovalButtons(_rec: Recommendation): Promise<"APPROVE" | "REJECT" | "PICK_ALTERNATIVE" | "RESTART"> {
   const mount = resolveMount();
   const display = resolveCandidateDisplay(_rec.recommendedCandidateId);
+  const uncertain = !!_rec.requiresReconfirmation;
   return new Promise((resolve) => {
     const draw = () => {
       mount.innerHTML = shell(`
       ${progress(4)}
       <section class="screen form-screen cp-screen">
         <div class="pill-row">
-          <span class="pill pill-acc">추천 정확도 높음</span>
+          ${uncertain
+            ? '<span class="pill pill-warn">직접 확인이 필요해요</span>'
+            : '<span class="pill pill-acc">추천 정확도 높음</span>'}
         </div>
-        <h1 class="title-lg">${display.department}로<br />안내해 드릴까요?</h1>
+        <h1 class="title-lg">${uncertain
+          ? "안내데스크로<br />안내해 드릴까요?"
+          : `${display.department}로<br />안내해 드릴까요?`}</h1>
         <p class="subtitle">최종 확인이에요. 원하는 선택지를 골라주세요.</p>
         <button type="button" class="option-card" data-action="approve">
           <span class="checkbox" aria-hidden="true">✓</span>

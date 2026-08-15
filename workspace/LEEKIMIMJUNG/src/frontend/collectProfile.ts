@@ -47,6 +47,13 @@ export {
   toOfficialDepartmentId,
 };
 
+/** 무로그인 QR 프로필 — docs/LOGINLESS_QR_PROFILE_GUIDE.md. Mock QR + 기기 내 접근성 설정 저장/조회/삭제. */
+import {
+  buildMockQrPayload, loadDeviceProfile, saveDeviceProfile, clearDeviceProfile,
+} from "./deviceProfile.ts";
+import type { MockQrPayload, StoredDeviceProfile } from "./deviceProfile.ts";
+export { buildMockQrPayload, loadDeviceProfile, saveDeviceProfile, clearDeviceProfile };
+
 /** 글자 크기 3단계 — "글씨 크게" 설정에서 고릅니다. */
 export type FontScale = "NORMAL" | "LARGE" | "XLARGE";
 
@@ -248,15 +255,26 @@ export function loginChoiceScreenHTML(): string {
   </section>`;
 }
 
-/** QR 로그인/회원가입 화면 — "로그인 / 회원가입 하기"를 누르면 나옵니다. */
-export function qrAuthScreenHTML(): string {
+/**
+ * QR 로그인/회원가입 화면 — "로그인 / 회원가입 하기"를 누르면 나옵니다.
+ * 실제 카메라 스캔이 아니라 데모용 Mock QR입니다(docs/LOGINLESS_QR_PROFILE_GUIDE.md).
+ * QR 인식 영역을 누르면 예시 QR 내용(환경 ID·버전·일회용 값만)을 보여주고,
+ * 그걸 확인한 뒤에만 "완료"가 활성화됩니다 — 아무것도 안 눌러도 되고, 눌러도 개인정보는 없습니다.
+ */
+export function qrAuthScreenHTML(payload: MockQrPayload | null = null): string {
   return `
   <section class="screen form-screen cp-screen">
     <button type="button" class="back-link" data-action="back" aria-label="메인으로 돌아가기">‹</button>
     <h1 class="title-lg">QR코드로<br />로그인/회원가입</h1>
     <p class="qr-subtitle">로그인과 회원가입이 한번에 가능해요.</p>
-    <div class="qr-box" role="img" aria-label="QR 코드 인식 영역"></div>
-  </section>${nextButton("완료", true)}`;
+    <button type="button" class="qr-box" data-action="qr-scan" role="img" aria-label="QR 코드 인식 영역 — 눌러서 예시 QR을 읽어보세요">
+      ${payload ? "" : "예시 QR 읽기"}
+    </button>
+    ${payload
+      ? `<pre class="qr-payload" aria-label="QR 내용">${JSON.stringify(payload, null, 2)}</pre>
+    <p class="qr-note">QR에는 환경 정보와 일회용 값만 들어 있어요.<br />이름·연락처 같은 개인정보는 담지 않아요.</p>`
+      : ""}
+  </section>${nextButton("완료", !!payload)}`;
 }
 
 /**
@@ -265,8 +283,19 @@ export function qrAuthScreenHTML(): string {
  *
  * 로그인 사용자는 "전에 하신 설정이 맞는지 확인해 주세요"로 제목이 바뀝니다.
  * (같은 화면 — 로그인/비회원 여부에 따라 텍스트만 달라집니다.)
+ *
+ * "이 기기에 저장하기"는 기본값이 꺼짐(이번 한 번만 사용)이며, 켜야만 완료 시 저장됩니다
+ * (docs/LOGINLESS_QR_PROFILE_GUIDE.md §3-5: 저장은 선택, 기본값은 저장 안 함).
+ * 저장된 설정이 있으면 "저장된 설정 지우기" 버튼이 함께 보입니다(§6: 한 번의 조작으로 삭제).
  */
-export function accessibilityScreenHTML(state: AccessibilityState = {}, expanded = false, loggedIn = false): string {
+export function accessibilityScreenHTML(
+  state: AccessibilityState = {},
+  expanded = false,
+  loggedIn = false,
+  saveToDevice = false,
+  hasStoredProfile = false,
+  justForgot = false,
+): string {
   const ready = ACCESSIBILITY_SETTINGS.some((s) => !!state[s.key]);
   const easy = !!state["EASY_MODE"];
   const simple = !!state["SIMPLE_STEPS"];
@@ -285,7 +314,42 @@ export function accessibilityScreenHTML(state: AccessibilityState = {}, expanded
         ? `${settingCard(s.key, s.title, s.desc, !!state[s.key], easy)}${expanded ? fontScaleRowHTML(scale) : ""}`
         : settingCard(s.key, s.title, s.desc, !!state[s.key], easy),
     ).join("")}
+    <div class="device-save-row">
+      <button type="button" class="dept-card ${saveToDevice ? "is-selected" : ""}" data-action="toggle-save" aria-pressed="${saveToDevice}">
+        <span class="dept-checkbox" aria-hidden="true">${saveToDevice ? "✓" : ""}</span>
+        <span class="dept-copy">
+          <span class="dept-title">이 기기에 설정 저장하기</span>
+          <span class="dept-hint">다음에 다시 올 때 자동으로 불러와요 · 저장 안 해도 지금 흐름은 그대로 이용할 수 있어요</span>
+        </span>
+      </button>
+      ${hasStoredProfile ? '<button type="button" class="secondary-action wide" data-action="forget-device">저장된 설정 지우기</button>' : ""}
+      ${justForgot ? '<p class="device-forget-note" role="status">이 기기에 저장된 설정을 지웠습니다.</p>' : ""}
+    </div>
   </section>${nextWithSkipButton("완료", ready)}`;
+}
+
+/**
+ * "이 기기에 저장된 설정이 있어요. 불러올까요?" 확인 모달 — 자동으로 불러온 정보는
+ * 반드시 보여주고 확인받아야 합니다(docs/LOGINLESS_QR_PROFILE_GUIDE.md §3-8).
+ * 공용 기기일 수 있으므로 "앞사람의 설정일 수 있다"는 안내를 함께 보여줍니다.
+ */
+export function deviceProfileConfirmOverlayHTML(stored: StoredDeviceProfile): string {
+  const activeTitles = ACCESSIBILITY_SETTINGS.filter((s) => !!stored.settings[s.key]).map((s) => s.title);
+  const savedDate = stored.savedAt.slice(0, 10);
+  return `
+  <div class="confirm-overlay" role="dialog" aria-modal="true" aria-label="저장된 설정을 불러올까요?">
+    <div class="confirm-panel">
+      <h2>이 기기에 저장된<br />설정이 있어요</h2>
+      <p class="confirm-note">${savedDate}에 저장한 설정이에요.${
+        activeTitles.length > 0 ? `<br />${activeTitles.join(" · ")}` : ""
+      }</p>
+      <div class="confirm-actions">
+        <button type="button" class="confirm-no" data-action="confirm-no">아니요, 새로 고를게요</button>
+        <button type="button" class="confirm-yes" data-action="confirm-yes" data-autofocus>네, 불러올게요</button>
+      </div>
+      <p class="confirm-note">공용 기기라면 이전 사람의 설정일 수 있어요.<br />맞는지 확인하고 골라주세요.</p>
+    </div>
+  </div>`;
 }
 
 /**
@@ -437,9 +501,10 @@ async function renderLoginChoiceScreen(): Promise<{ loggedIn: boolean; auth: str
   const mount = resolveMount();
   let mode: "MAIN" | "QR" = "MAIN";
   let staffAlert = false;
+  let qrPayload: MockQrPayload | null = null;
   return new Promise((resolve) => {
     const draw = () => {
-      const content = shell(mode === "MAIN" ? loginChoiceScreenHTML() : qrAuthScreenHTML());
+      const content = shell(mode === "MAIN" ? loginChoiceScreenHTML() : qrAuthScreenHTML(qrPayload));
       mount.innerHTML = staffAlert ? `${content}${staffAlertOverlayHTML()}` : content;
       focusFirst(mount);
     };
@@ -459,12 +524,20 @@ async function renderLoginChoiceScreen(): Promise<{ loggedIn: boolean; auth: str
       }
       if (action === "back") {
         mode = "MAIN";
+        qrPayload = null;
+        draw();
+        return;
+      }
+      if (action === "qr-scan") {
+        qrPayload = buildMockQrPayload();
         draw();
         return;
       }
       if (mode === "QR") {
-        mount.removeEventListener("click", onClick);
-        resolve({ loggedIn: true, auth: "LOGIN" });
+        if (action === "next" && qrPayload) {
+          mount.removeEventListener("click", onClick);
+          resolve({ loggedIn: true, auth: "QR" });
+        }
         return;
       }
       if (!choice) return;
@@ -482,6 +555,26 @@ async function renderLoginChoiceScreen(): Promise<{ loggedIn: boolean; auth: str
 }
 
 /**
+ * "이 기기에 저장된 설정이 있어요. 불러올까요?" 확인 모달을 띄우고 결과를 기다립니다.
+ * "네" → true, "아니요" → false.
+ */
+function askApplyDeviceProfileConfirm(mount: HTMLElement, stored: StoredDeviceProfile): Promise<boolean> {
+  const wrap = document.createElement("div");
+  wrap.innerHTML = deviceProfileConfirmOverlayHTML(stored);
+  const overlay = wrap.firstElementChild as HTMLElement;
+  mount.appendChild(overlay);
+  overlay.querySelector<HTMLElement>("[data-autofocus]")?.focus();
+  return new Promise((resolve) => {
+    const close = (value: boolean) => {
+      overlay.remove();
+      resolve(value);
+    };
+    overlay.querySelector<HTMLElement>('[data-action="confirm-yes"]')?.addEventListener("click", () => close(true));
+    overlay.querySelector<HTMLElement>('[data-action="confirm-no"]')?.addEventListener("click", () => close(false));
+  });
+}
+
+/**
  * 나에게 맞는 설정 화면 — 글씨 크게(누르면 보통/크게/아주 크게 3단계 펼침) /
  * 음성 안내 / 보호자 동행 / 공황장애 4개 복수 선택.
  * 로그인 사용자는 제목이 "전에 하신 설정이 맞는지 확인해 주세요"로 바뀝니다.
@@ -489,13 +582,27 @@ async function renderLoginChoiceScreen(): Promise<{ loggedIn: boolean; auth: str
  */
 async function renderAccessibilityScreen(loggedIn = false, initial: AccessibilityState = {}): Promise<AccessibilityState | typeof BACK> {
   const mount = resolveMount();
-  const state: AccessibilityState = { fontScale: "NORMAL", ...initial };
+  let state: AccessibilityState = { fontScale: "NORMAL", ...initial };
   let expanded = false;
+  let saveToDevice = false;
+  let stored = loadDeviceProfile();
+  let justForgot = false;
+
+  // 처음 들어왔고(뒤로가기로 온 게 아니고) 저장된 설정이 있으면, 조용히 적용하지 않고 먼저 물어봅니다
+  // (docs/LOGINLESS_QR_PROFILE_GUIDE.md §3-8: 자동으로 불러온 정보는 화면에 보여주고 확인받을 것).
+  if (Object.keys(initial).length === 0 && stored) {
+    const apply = await askApplyDeviceProfileConfirm(mount, stored);
+    if (apply) {
+      state = { fontScale: "NORMAL", ...stored.settings };
+      saveToDevice = true;
+    }
+  }
+
   return new Promise((resolve) => {
     const draw = () => {
       setFontScale((state.fontScale ?? "NORMAL") as FontScale);
       setHighContrast(!!state["HIGH_CONTRAST"]);
-      mount.innerHTML = shell(accessibilityScreenHTML(state, expanded, loggedIn));
+      mount.innerHTML = shell(accessibilityScreenHTML(state, expanded, loggedIn, saveToDevice, !!stored, justForgot));
       focusFirst(mount);
     };
     function onClick(event: MouseEvent) {
@@ -503,6 +610,7 @@ async function renderAccessibilityScreen(loggedIn = false, initial: Accessibilit
       if (!btn) return;
       const key = btn.dataset.setting;
       const fontScale = btn.dataset.fontScale;
+      const action = btn.dataset.action;
       if (fontScale) {
         state.fontScale = fontScale as FontScale;
         if (fontScale === "NORMAL") delete state.LARGE_TEXT;
@@ -515,10 +623,20 @@ async function renderAccessibilityScreen(loggedIn = false, initial: Accessibilit
         if (state[key]) delete state[key];
         else state[key] = true;
         draw();
-      } else if (btn.dataset.action === "back") {
+      } else if (action === "toggle-save") {
+        saveToDevice = !saveToDevice;
+        justForgot = false;
+        draw();
+      } else if (action === "forget-device") {
+        clearDeviceProfile();
+        stored = null;
+        saveToDevice = false;
+        justForgot = true;
+        draw();
+      } else if (action === "back") {
         mount.removeEventListener("click", onClick);
         resolve(BACK);
-      } else if (btn.dataset.action === "skip") {
+      } else if (action === "skip") {
         state.fontScale = "NORMAL";
         delete state.LARGE_TEXT;
         delete state.HIGH_CONTRAST;
@@ -526,8 +644,9 @@ async function renderAccessibilityScreen(loggedIn = false, initial: Accessibilit
         setHighContrast(false);
         mount.removeEventListener("click", onClick);
         resolve({ fontScale: "NORMAL" });
-      } else if (btn.dataset.action === "next" && ACCESSIBILITY_SETTINGS.some((s) => !!state[s.key])) {
+      } else if (action === "next" && ACCESSIBILITY_SETTINGS.some((s) => !!state[s.key])) {
         proceedIfConfirmed(mount, !!state["SIMPLE_STEPS"], () => {
+          if (saveToDevice) saveDeviceProfile(state);
           mount.removeEventListener("click", onClick);
           resolve(state);
         });
