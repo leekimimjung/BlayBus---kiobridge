@@ -63,6 +63,7 @@ export function createSessionContext(
   const hardConstraints: Record<string, unknown> = {};
   const capabilities: Record<string, unknown> = {};
   const fieldMetadata: Record<string, unknown> = {};
+  const extensions: Record<string, unknown> = {};
 
   const setField = (
     section: Record<string, unknown>,
@@ -133,6 +134,15 @@ export function createSessionContext(
       pick(raw, "departmentId", "UNSPECIFIED"),
       { source: inputSource, confidence: raw.departmentId ? 0.9 : 0, confirmedByUser: !!raw.departmentId });
 
+    // 화면엔 공식 6개 enum 밖의 과(예: 신경과)도 보여주고, 제출 직전에 UNSPECIFIED로 정규화합니다
+    // (schemas/domains/hospital.context.schema.json 이 6개 외 값을 거부하기 때문).
+    // 그렇다고 사용자가 실제로 고른 과가 사라지면 안 되므로, 원래 선택값은 팀 namespace
+    // extensions 에 남겨서 병원(사람)이 확인할 수 있게 합니다 — 증상 추론이 아니라
+    // "사용자가 직접 고른 값을 그대로 전달"하는 것이라 병원 환경 금지 규칙 위반이 아닙니다.
+    if (typeof raw.departmentDisplayId === "string" && raw.departmentDisplayId !== facts.departmentId) {
+      extensions["LEEKIMIMJUNG.departmentDisplayId"] = raw.departmentDisplayId;
+    }
+
     setField(facts, "facts", "guardianPresent",
       typeof raw.guardianPresent === "boolean" ? raw.guardianPresent : false,
       { source: inputSource, confidence: raw.guardianPresent !== undefined ? 1 : 0.3, confirmedByUser: raw.guardianPresent !== undefined });
@@ -184,6 +194,7 @@ export function createSessionContext(
     hardConstraints,
     capabilities,
     fieldMetadata,
+    ...(Object.keys(extensions).length > 0 ? { extensions } : {}),
   };
 
   return sessionContext as AnySessionContext;
