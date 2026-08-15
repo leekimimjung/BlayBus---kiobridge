@@ -89,7 +89,7 @@ export const DEPARTMENTS = [
 // ══════════════════════════════════════════════════════════════
 const header = () => `
   <header class="status-bar">
-    <div class="brand"><span class="brand-mark"></span><strong>은빛 병원</strong></div>
+    <div class="brand"><span class="brand-mark">${heroMarkSvg}</span><strong>은빛 병원</strong></div>
     <div class="clock"><small>6월 15일</small> <strong>3:36</strong></div>
   </header>`;
 const progress = (current) => `
@@ -172,6 +172,17 @@ const staffIconSmall = `
   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
     <path d="M18 16.5c0 .6-.5 1-1 1a13 13 0 0 1-9.3-3.8A13 13 0 0 1 4 4.5c0-.5.4-1 1-1h2.2c.5 0 .9.3 1 .8l.8 3c.1.5 0 .9-.3 1.2l-1.1 1.1a10.4 10.4 0 0 0 4 4l1.1-1.1c.3-.3.7-.4 1.2-.3l3 .8c.5.1.8.5.8 1V16.5z" fill="#868686"/>
   </svg>`;
+/** 웰컴 화면 로고 — 모서리가 접힌 "H" 마크. 브랜드 색상 토큰(--brand) 재사용. */
+export const heroMarkSvg = `
+  <svg viewBox="0 0 300 300" role="img" aria-hidden="true" focusable="false">
+    <defs>
+      <filter id="heroShadow" x="-50%" y="-50%" width="200%" height="200%">
+        <feDropShadow dx="5" dy="0" stdDeviation="3" flood-opacity="0.2"/>
+      </filter>
+    </defs>
+    <rect x="50" y="40" width="45" height="220" fill="var(--brand)" rx="3" filter="url(#heroShadow)"/>
+    <path d="M 205 60 L 250 40 L 250 260 L 205 260 L 205 180 L 95 180 L 95 135 L 205 135 Z" fill="var(--brand)" filter="url(#heroShadow)"/>
+  </svg>`;
 // ══════════════════════════════════════════════════════════════
 // 화면 HTML 빌더 (순수 함수 — 테스트에서도 확인 가능)
 // ══════════════════════════════════════════════════════════════
@@ -179,7 +190,7 @@ const staffIconSmall = `
 export function loginChoiceScreenHTML() {
     return `
   <section class="screen welcome-screen">
-    <div class="hero-mark" aria-hidden="true">H</div>
+    <div class="hero-mark" aria-hidden="true">${heroMarkSvg}</div>
     <p class="camera-caption">“안아프게 해 드릴게요”</p>
     <div class="auth-panel">
       <button type="button" class="auth-login" data-choice="auth">로그인 / 회원가입 하기</button>
@@ -317,7 +328,7 @@ export function departmentChoiceHTML(selected, settings = {}) {
       <span class="dept-checkbox" aria-hidden="true">${selected === RECOMMENDED_DEPARTMENT.value ? "✓" : ""}</span>
       <span class="dept-copy">
         <span class="dept-title">${RECOMMENDED_DEPARTMENT.title}</span>
-        <span class="dept-floor">3층 · 정형외과 접수 데스크</span>
+        <span class="dept-floor">2층 · 정형외과 접수 데스크</span>
         <span class="dept-hint">${staff ? "직원이 찾아와서 안내해 드릴게요" : "다음으로 넘어가면 길을 안내해 드려요"}</span>
       </span>
     </button>

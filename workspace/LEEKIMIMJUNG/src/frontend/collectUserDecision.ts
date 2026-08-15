@@ -52,6 +52,18 @@ export const RECOMMENDED_DEPARTMENT = {
   desc: "추천 — 방문 정보를 바탕으로 안내했어요",
 } as const;
 
+/** 헤더 로고 — 모서리가 접힌 "H" 마크. collectProfile.ts 와 동일. */
+const heroMarkSvg = `
+  <svg viewBox="0 0 300 300" role="img" aria-hidden="true" focusable="false">
+    <defs>
+      <filter id="heroShadow" x="-50%" y="-50%" width="200%" height="200%">
+        <feDropShadow dx="5" dy="0" stdDeviation="3" flood-opacity="0.2"/>
+      </filter>
+    </defs>
+    <rect x="50" y="40" width="45" height="220" fill="var(--brand)" rx="3" filter="url(#heroShadow)"/>
+    <path d="M 205 60 L 250 40 L 250 260 L 205 260 L 205 180 L 95 180 L 95 135 L 205 135 Z" fill="var(--brand)" filter="url(#heroShadow)"/>
+  </svg>`;
+
 /**
  * 병원 후보(fixture의 HOS-001~006, 고정값) → 화면에 보여줄 이름/진료과/위치.
  * 🚨 이건 "증상으로 진료과를 추론"하는 게 아니라, 이미 STEP5(recommend)가 고른
@@ -59,7 +71,7 @@ export const RECOMMENDED_DEPARTMENT = {
  */
 const CANDIDATE_DISPLAY: Record<string, { title: string; department: string; floor: string }> = {
   "HOS-001": { title: "예약 재진 접수", department: "내과", floor: "2층 · 내과 접수 데스크" },
-  "HOS-002": { title: "예약 초진 접수", department: "정형외과", floor: "3층 · 정형외과 접수 데스크" },
+  "HOS-002": { title: "예약 초진 접수", department: "정형외과", floor: "2층 · 정형외과 접수 데스크" },
   "HOS-003": { title: "비예약 초진 안내", department: "일반 안내", floor: "1층 · 종합 안내데스크" },
   "HOS-004": { title: "건강검진 안내", department: "건강검진센터", floor: "4층 · 건강검진센터" },
   "HOS-005": { title: "검사 예약 확인", department: "영상의학과", floor: "지하 1층 · 영상의학과" },
@@ -76,7 +88,7 @@ function resolveCandidateDisplay(candidateId: string | null | undefined): { cand
 
 const header = () => `
   <header class="status-bar">
-    <div class="brand"><span class="brand-mark"></span><strong>은빛 병원</strong></div>
+    <div class="brand"><span class="brand-mark">${heroMarkSvg}</span><strong>은빛 병원</strong></div>
     <div class="clock"><small>6월 15일</small> <strong>3:36</strong></div>
   </header>`;
 
@@ -122,7 +134,7 @@ export function departmentChoiceHTML(
     candidateId: RECOMMENDED_DEPARTMENT.value,
     title: RECOMMENDED_DEPARTMENT.title,
     department: RECOMMENDED_DEPARTMENT.title,
-    floor: "3층 · 정형외과 접수 데스크",
+    floor: "2층 · 정형외과 접수 데스크",
     reasons: [],
   },
 ): string {
