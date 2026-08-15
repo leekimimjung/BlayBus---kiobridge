@@ -70,7 +70,13 @@ export const RECOMMENDED_DEPARTMENT = {
     title: "정형외과",
     desc: "추천 — 방문 정보를 바탕으로 안내했어요",
 };
-/** 진료과 직접 선택지 — "다른 진료과를 선택할래요"를 고르면 나오는 10개 진료과. 값은 공식 enum 스타일을 따릅니다. */
+/**
+ * 진료과 직접 선택지 — "다른 진료과를 선택할래요"를 고르면 나오는 목록 (2열).
+ * 🏥 병원 환경의 실제 진료과 10개를 그대로 보여줍니다.
+ * 🚨 단, 제출용 departmentId 스키마는 공식 6개만 허용합니다 (docs/ENUM_REFERENCE.md).
+ * 화면 값(예: NEUROLOGY)은 그대로 두고, 제출 직전에 toOfficialDepartmentId() 로
+ * 스키마에 없는 과는 UNSPECIFIED(일반 안내)로 매핑합니다 (증상으로 진료과 추론 금지).
+ */
 export const DEPARTMENTS = [
     { value: "INTERNAL_MEDICINE", title: "내과" },
     { value: "NEUROLOGY", title: "신경과" },
@@ -82,8 +88,14 @@ export const DEPARTMENTS = [
     { value: "OPHTHALMOLOGY", title: "안과" },
     { value: "ENT", title: "이비인후과" },
     { value: "DERMATOLOGY", title: "피부과" },
+    { value: "UNSPECIFIED", title: "잘 모르겠어요" },
 ];
-/** "다른 진료과 선택"을 골라도 별도 목록 화면 없이 추천 진료과(정형외과) 안내로 바로 이어집니다. */
+
+/** 제출용 공식 departmentId enum 값 (docs/ENUM_REFERENCE.md). 스키마에 없는 값은 UNSPECIFIED 로 폴백합니다. */
+export const OFFICIAL_DEPARTMENT_IDS = ["INTERNAL_MEDICINE", "ORTHOPEDICS", "ENT", "RADIOLOGY", "HEALTH_SCREENING", "UNSPECIFIED"];
+export function toOfficialDepartmentId(departmentId) {
+    return OFFICIAL_DEPARTMENT_IDS.includes(departmentId) ? departmentId : "UNSPECIFIED";
+}
 // ══════════════════════════════════════════════════════════════
 // 공통 UI 헬퍼 — 같은 폴더의 style.css 클래스를 그대로 재사용합니다.
 // ══════════════════════════════════════════════════════════════
@@ -298,15 +310,23 @@ export function visitTypeScreenHTML(selected, settings = {}) {
  * 진료과 선택(추천) 화면 — Figma 시안(진료과 추천) 적용.
  * 추천 진료과 카드 + "다른 진료과를 선택할래요" 카드 2개 선택지.
  * 설정에서 음성 안내를 켰으면 "음성 안내 모드" 필을 표시합니다. 증상은 묻지 않습니다.
+ * @param recommended STEP5(recommend)/STEP6(explainRecommendation)가 실제로 계산한 결과.
+ *   생략하면 RECOMMENDED_DEPARTMENT를 기본값으로 씁니다.
  */
-export function departmentChoiceHTML(selected, settings = {}) {
+export function departmentChoiceHTML(selected, settings = {}, recommended = {
+    candidateId: RECOMMENDED_DEPARTMENT.value,
+    title: RECOMMENDED_DEPARTMENT.title,
+    department: RECOMMENDED_DEPARTMENT.title,
+    floor: "2층 · 정형외과 접수 데스크",
+    reasons: [],
+}) {
     const voice = !!settings["VOICE_GUIDANCE"];
     const staff = !!settings["STAFF_HELP"];
     const visual = !!settings["VISUAL_GUIDANCE"];
     const simple = !!settings["SIMPLE_STEPS"];
-    const reason = staff
-        ? "직원 도움을 선호하셔서, 직원이 찾아와 진료과까지 안내해 드릴게요.<br />다르다면 아래에서 직접 선택할 수 있어요."
-        : "재진 기록과 방문 정보를 바탕으로 판단했어요.<br />다르다면 아래에서 직접 선택할 수 있어요.";
+    const reason = recommended.reasons.length > 0
+        ? recommended.reasons.join("<br />") + "<br />다르다면 아래에서 직접 선택할 수 있어요."
+        : "입력하신 정보를 바탕으로 안내해 드려요.<br />다르다면 아래에서 직접 선택할 수 있어요.";
     return `
   ${progress(3)}
   <section class="screen form-screen cp-screen">
@@ -318,17 +338,17 @@ export function departmentChoiceHTML(selected, settings = {}) {
       <span class="pill pill-acc">추천 정확도 높음</span>
       ${backLink(simple)}
     </div>
-    <h1 class="title-lg">정형외과로<br />안내해 드릴게요</h1>
+    <h1 class="title-lg">${recommended.department}로<br />안내해 드릴게요</h1>
     ${calmNote(simple)}
     <div class="q-card">
-      <strong>왜 정형외과인가요?</strong>
+      <strong>왜 ${recommended.department}인가요?</strong>
       <p>${reason}</p>
     </div>
-    <button type="button" class="dept-card ${selected === RECOMMENDED_DEPARTMENT.value ? "is-selected" : ""}" data-group="department" data-value="${RECOMMENDED_DEPARTMENT.value}">
-      <span class="dept-checkbox" aria-hidden="true">${selected === RECOMMENDED_DEPARTMENT.value ? "✓" : ""}</span>
+    <button type="button" class="dept-card ${selected === recommended.candidateId ? "is-selected" : ""}" data-group="department" data-value="${recommended.candidateId}">
+      <span class="dept-checkbox" aria-hidden="true">${selected === recommended.candidateId ? "✓" : ""}</span>
       <span class="dept-copy">
-        <span class="dept-title">${RECOMMENDED_DEPARTMENT.title}</span>
-        <span class="dept-floor">2층 · 정형외과 접수 데스크</span>
+        <span class="dept-title">${recommended.title}</span>
+        <span class="dept-floor">${recommended.floor}</span>
         <span class="dept-hint">${staff ? "직원이 찾아와서 안내해 드릴게요" : "다음으로 넘어가면 길을 안내해 드려요"}</span>
       </span>
     </button>
@@ -341,7 +361,7 @@ export function departmentChoiceHTML(selected, settings = {}) {
     </button>
   </section>${nextButton("다음", selected !== "", simple)}`;
 }
-/** 진료과 직접 선택 화면 — "다른 진료과를 선택할래요"를 고르면 10개 진료과 목록이 펼쳐집니다. */
+/** 진료과 직접 선택 화면 — "다른 진료과를 선택할래요"를 고르면 공식 6개 진료과가 2열로 펼쳐집니다. */
 export function departmentListScreenHTML(selected, settings = {}) {
     const simple = !!settings["SIMPLE_STEPS"];
     return `
@@ -352,10 +372,11 @@ export function departmentListScreenHTML(selected, settings = {}) {
     <h1 class="title-lg">진료과를<br />골라주세요</h1>
     <p class="subtitle">안내받을 진료과를 직접 선택해 주세요</p>
     ${calmNote(simple)}
-    ${DEPARTMENTS.map((d) => choiceCard("department", d.value, d.title, "", selected === d.value)).join("")}
+    <div class="dept-grid">
+      ${DEPARTMENTS.map((d) => choiceCard("department", d.value, d.title, "", selected === d.value)).join("")}
+    </div>
   </section>${nextButton("다음", selected !== "", simple)}`;
 }
-/** 진료과 직접 선택 화면은 제거 — "다른 진료과 선택"을 골라도 정형외과 안내로 바로 이어집니다. */
 // ══════════════════════════════════════════════════════════════
 // DOM 연결 헬퍼
 // ══════════════════════════════════════════════════════════════
@@ -420,6 +441,10 @@ function askProceedConfirm(mount) {
 }
 /** 공황장애 모드면 안심 확인 모달을 거친 뒤에 진행하고, 아니면 바로 진행합니다. */
 function proceedIfConfirmed(mount, simple, onProceed) {
+    if (!simple) {
+        onProceed();
+        return;
+    }
     void askProceedConfirm(mount).then((ok) => {
         if (ok)
             onProceed();
@@ -658,7 +683,9 @@ async function renderVisitTypeScreen(settings = {}, initial = "") {
 export async function renderDepartmentScreen(settings = {}, initial = "") {
     const mount = resolveMount();
     const simple = !!settings["SIMPLE_STEPS"];
-    let mode = "CHOICE";
+    // 다시 열 때(✕) 이전에 고른 진료과가 추천 카드(정형외과)가 아니면 목록 화면부터 시작해
+    // 선택 상태를 그대로 보여줍니다. 아니면 추천/직접선택 2개 화면에서 시작합니다.
+    let mode = initial && initial !== "OTHER" && initial !== RECOMMENDED_DEPARTMENT.value ? "LIST" : "CHOICE";
     let selected = initial;
     let paused = false;
     let staffAsked = false;
@@ -737,7 +764,10 @@ export function assembleRawInput(parts) {
         guardianPresent: !!parts.accessibility["GUARDIAN_MODE"],
         appointmentStatus: parts.appointmentStatus,
         visitType: parts.visitType,
-        departmentId: parts.departmentId,
+        // 제출용 departmentId 는 공식 enum 으로 정규화하고,
+        // 화면에서 고른 진료과(departmentDisplayId)는 데모 길안내/재선택에 그대로 씁니다.
+        departmentId: toOfficialDepartmentId(parts.departmentId),
+        departmentDisplayId: parts.departmentId,
         // STEP 2 가 fieldMetadata 를 채울 때 쓸 수 있도록 수집 메타 정보를 남깁니다.
         _confirmedByUser: true,
         _collectedVia: "WEB_FORM",

@@ -1,7 +1,7 @@
 // collectProfile 브라우저 데모 부트스트랩.
 // collectProfile.demo.js(컴파일된 모듈)로 정보를 모은 뒤,
 // 수집 화면 대신 "해당 진료과 안내 → 대기 번호 발급" 화면으로 이어집니다.
-import { collectProfile, pauseScreenHTML, renderDepartmentScreen, BACK, heroMarkSvg } from "./collectProfile.demo.js";
+import { collectProfile, pauseScreenHTML, renderDepartmentScreen, BACK, heroMarkSvg, toOfficialDepartmentId } from "./collectProfile.demo.js";
 
 const root = document.querySelector("#app");
 
@@ -170,7 +170,9 @@ function openConfirm({ title, noLabel, yesLabel, onNo, onYes, onClose }) {
 }
 
 function renderRoute(raw, onTicket) {
-  const departmentId = raw.departmentId;
+  // departmentId 는 제출용 공식 enum 으로 정규화되므로, 길안내는 화면에서 고른
+  // 진료과(departmentDisplayId)를 기준으로 보여줍니다.
+  const departmentId = raw.departmentDisplayId || raw.departmentId;
   const name = departmentName(departmentId);
   const location = DEPARTMENT_LOCATION[departmentId];
   const voice = !!raw.VOICE_GUIDANCE;
@@ -295,15 +297,20 @@ async function runFlow() {
   const raw = await collectProfile();
   const simple = !!raw.SIMPLE_STEPS;
 
-  // 진료과 선택 화면을 다시 띄워 최종 확인을 닫아도(✕) 다른 진료과를 다시 고를 수 있게 합니다.
+  // collectProfile이 이미 진료과를 골랐으므로 최종 확인부터 띄웁니다.
+  // 최종 확인을 닫으면(✕) 진료과 선택 화면으로 돌아가 다른 진료과를 다시 고를 수 있습니다.
+  // (이 화면은 직전에 고른 진료과를 미리 선택해 두어 '다음' 한 번이면 진행됩니다.)
   const openDepartmentScreen = async () => {
-    const result = await renderDepartmentScreen(raw);
+    // departmentId 는 제출용 공식 enum 으로 정규화됐으므로, 재선택 화면은 화면에서
+    // 고른 진료과(departmentDisplayId)를 기준으로 다시 엽니다.
+    const result = await renderDepartmentScreen(raw, raw.departmentDisplayId ?? "");
     if (result === BACK) {
       openDepartmentScreen();
       return;
     }
     const { departmentId } = result;
-    raw.departmentId = departmentId;
+    raw.departmentDisplayId = departmentId;
+    raw.departmentId = toOfficialDepartmentId(departmentId);
     askFinalConfirm();
   };
 
@@ -319,11 +326,11 @@ async function runFlow() {
       onYes: () => runFlow(),
       onClose: () => void openDepartmentScreen(),
     }),
-    onYes: () => renderRoute(raw, () => renderTicket(raw.departmentId, simple)),
+    onYes: () => renderRoute(raw, () => renderTicket(raw.departmentDisplayId || raw.departmentId, simple)),
     onClose: () => void openDepartmentScreen(),
   });
 
-  openDepartmentScreen();
+  askFinalConfirm();
 }
 
 runFlow();

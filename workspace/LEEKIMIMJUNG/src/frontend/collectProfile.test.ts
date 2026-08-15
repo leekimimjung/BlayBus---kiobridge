@@ -19,6 +19,7 @@ import {
   proceedConfirmOverlayHTML,
   qrAuthScreenHTML,
   reservationScreenHTML,
+  toOfficialDepartmentId,
   visitTypeScreenHTML,
 } from "./collectProfile.ts";
 
@@ -217,8 +218,8 @@ test("진료과(추천) 화면: 진행 단계가 5칸이고 직원 호출 버튼
   assert.doesNotMatch(html, /data-action="staff"/);
 });
 
-test("진료과 직접 선택: '다른 진료과'는 10개 선택지(내과·신경과·정신건강의학과·외과·정형외과·산부인과·소아청소년과·안과·이비인후과·피부과)를 보여준다", () => {
-  assert.equal(DEPARTMENTS.length, 10);
+test("진료과 직접 선택: 병원 진료과 10개 + 잘 모르겠어요를 2열 그리드로 보여준다", () => {
+  assert.equal(DEPARTMENTS.length, 11);
   const titles = DEPARTMENTS.map((d) => d.title);
   assert.deepEqual(titles, [
     "내과",
@@ -231,20 +232,44 @@ test("진료과 직접 선택: '다른 진료과'는 10개 선택지(내과·신
     "안과",
     "이비인후과",
     "피부과",
+    "잘 모르겠어요",
   ]);
+  const html = departmentListScreenHTML("");
+  assert.match(html, /class="dept-grid"/);
 });
 
-test("진료과 직접 선택 화면: 10개 목록을 모두 렌더링하고 증상을 묻지 않는다", () => {
+test("진료과 직접 선택 화면: 목록 전체를 렌더링하고 증상을 묻지 않는다", () => {
   const html = departmentListScreenHTML("");
+  const escapeRegExp = (text: string) => text.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
   for (const d of DEPARTMENTS) {
     assert.match(html, new RegExp(`data-value="${d.value}"`));
-    assert.match(html, new RegExp(d.title));
+    assert.match(html, new RegExp(escapeRegExp(d.title)));
   }
   assert.match(html, /진료과를/);
   assert.match(html, /data-action="back"/);
   assert.doesNotMatch(html, /아프|증상/);
   assert.match(html, /disabled/);
   assert.doesNotMatch(departmentListScreenHTML("ENT"), /disabled/);
+});
+
+test("진료과 직접 선택: 스키마에 없는 진료과(신경과 등)는 제출용 departmentId로 UNSPECIFIED로 매핑된다", () => {
+  assert.equal(toOfficialDepartmentId("ORTHOPEDICS"), "ORTHOPEDICS");
+  assert.equal(toOfficialDepartmentId("INTERNAL_MEDICINE"), "INTERNAL_MEDICINE");
+  assert.equal(toOfficialDepartmentId("ENT"), "ENT");
+  assert.equal(toOfficialDepartmentId("NEUROLOGY"), "UNSPECIFIED");
+  assert.equal(toOfficialDepartmentId("SURGERY"), "UNSPECIFIED");
+  assert.equal(toOfficialDepartmentId("DERMATOLOGY"), "UNSPECIFIED");
+  assert.equal(toOfficialDepartmentId("UNSPECIFIED"), "UNSPECIFIED");
+  assert.equal(toOfficialDepartmentId(""), "UNSPECIFIED");
+
+  const raw = assembleRawInput({
+    accessibility: {},
+    appointmentStatus: "HAS_APPOINTMENT",
+    visitType: "FIRST_VISIT",
+    departmentId: "NEUROLOGY",
+  });
+  assert.equal(raw.departmentId, "UNSPECIFIED");
+  assert.equal(raw.departmentDisplayId, "NEUROLOGY");
 });
 
 test("assembleRawInput: 로그인 여부와 화면 값을 하나로 합치고 보호자 동행을 설정에서 파생한다", () => {

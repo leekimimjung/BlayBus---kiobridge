@@ -37,8 +37,15 @@ import {
   departmentChoiceHTML,
   DEPARTMENTS,
   departmentListScreenHTML,
+  toOfficialDepartmentId,
 } from "./collectUserDecision.ts";
-export { RECOMMENDED_DEPARTMENT, departmentChoiceHTML, DEPARTMENTS, departmentListScreenHTML };
+export {
+  RECOMMENDED_DEPARTMENT,
+  departmentChoiceHTML,
+  DEPARTMENTS,
+  departmentListScreenHTML,
+  toOfficialDepartmentId,
+};
 
 /** 글자 크기 3단계 — "글씨 크게" 설정에서 고릅니다. */
 export type FontScale = "NORMAL" | "LARGE" | "XLARGE";
@@ -409,6 +416,10 @@ function askProceedConfirm(mount: HTMLElement): Promise<boolean> {
 
 /** 공황장애 모드면 안심 확인 모달을 거친 뒤에 진행하고, 아니면 바로 진행합니다. */
 function proceedIfConfirmed(mount: HTMLElement, simple: boolean, onProceed: () => void): void {
+  if (!simple) {
+    onProceed();
+    return;
+  }
   void askProceedConfirm(mount).then((ok) => {
     if (ok) onProceed();
   });
@@ -636,7 +647,9 @@ async function renderVisitTypeScreen(settings: AccessibilityState = {}, initial 
 async function renderDepartmentScreen(settings: AccessibilityState = {}, initial = ""): Promise<{ departmentId: string } | typeof BACK> {
   const mount = resolveMount();
   const simple = !!settings["SIMPLE_STEPS"];
-  let mode: "CHOICE" | "LIST" = "CHOICE";
+  // 다시 열 때(✕) 이전에 고른 진료과가 추천 카드(정형외과)가 아니면 목록 화면부터 시작해
+  // 선택 상태를 그대로 보여줍니다. 아니면 추천/직접선택 2개 화면에서 시작합니다.
+  let mode: "CHOICE" | "LIST" = initial && initial !== "OTHER" && initial !== RECOMMENDED_DEPARTMENT.value ? "LIST" : "CHOICE";
   let selected = initial;
   let paused = false;
   let staffAsked = false;
@@ -720,7 +733,10 @@ export function assembleRawInput(parts: {
     guardianPresent: !!parts.accessibility["GUARDIAN_MODE"],
     appointmentStatus: parts.appointmentStatus,
     visitType: parts.visitType,
-    departmentId: parts.departmentId,
+    // 제출용 departmentId 는 공식 enum 으로 정규화하고,
+    // 화면에서 고른 진료과(departmentDisplayId)는 데모 길안내/재선택에 그대로 씁니다.
+    departmentId: toOfficialDepartmentId(parts.departmentId),
+    departmentDisplayId: parts.departmentId,
     // STEP 2 가 fieldMetadata 를 채울 때 쓸 수 있도록 수집 메타 정보를 남깁니다.
     _confirmedByUser: true,
     _collectedVia: "WEB_FORM",

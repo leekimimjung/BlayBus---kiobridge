@@ -183,20 +183,31 @@ export function departmentChoiceHTML(
 
 
 /**
- * 진료과 직접 선택지 — "다른 진료과를 선택할래요"를 고르면 나오는 목록.
- * 🚨 병원 환경 공식 departmentId enum 6개만 씁니다 (docs/ENUM_REFERENCE.md).
- * 예전 버전은 여기 없는 값(신경과/정신건강의학과 등 7개)을 썼는데, 그 값들은 실제
- * departmentId 스키마에 없어서 제출하면 무조건 거부됩니다 — 공식 6개로 교체했습니다.
- * "잘 모르겠어요"는 UNSPECIFIED로 매핑됩니다 (증상으로 진료과 추론 금지 — 모르면 일반 안내).
+ * 진료과 직접 선택지 — "다른 진료과를 선택할래요"를 고르면 나오는 목록 (2열).
+ * 🏥 병원 환경의 실제 진료과 10개를 그대로 보여줍니다.
+ * 🚨 단, 제출용 departmentId 스키마는 공식 6개만 허용합니다 (docs/ENUM_REFERENCE.md).
+ * 화면 값(예: NEUROLOGY)은 그대로 두고, 제출 직전에 toOfficialDepartmentId() 로
+ * 스키마에 없는 과는 UNSPECIFIED(일반 안내)로 매핑합니다 (증상으로 진료과 추론 금지).
  */
 export const DEPARTMENTS = [
   { value: "INTERNAL_MEDICINE", title: "내과" },
+  { value: "NEUROLOGY", title: "신경과" },
+  { value: "PSYCHIATRY", title: "정신건강의학과" },
+  { value: "SURGERY", title: "외과" },
   { value: "ORTHOPEDICS", title: "정형외과" },
+  { value: "OBSTETRICS_AND_GYNECOLOGY", title: "산부인과" },
+  { value: "PEDIATRICS", title: "소아청소년과" },
+  { value: "OPHTHALMOLOGY", title: "안과" },
   { value: "ENT", title: "이비인후과" },
-  { value: "RADIOLOGY", title: "영상의학과" },
-  { value: "HEALTH_SCREENING", title: "건강검진센터" },
-  { value: "UNSPECIFIED", title: "잘 모르겠어요 (일반 안내)" },
+  { value: "DERMATOLOGY", title: "피부과" },
+  { value: "UNSPECIFIED", title: "잘 모르겠어요" },
 ] as const;
+
+/** 제출용 공식 departmentId enum 값 (docs/ENUM_REFERENCE.md). 스키마에 없는 값은 UNSPECIFIED 로 폴백합니다. */
+export const OFFICIAL_DEPARTMENT_IDS = ["INTERNAL_MEDICINE", "ORTHOPEDICS", "ENT", "RADIOLOGY", "HEALTH_SCREENING", "UNSPECIFIED"] as const;
+export function toOfficialDepartmentId(departmentId: string): string {
+  return (OFFICIAL_DEPARTMENT_IDS as readonly string[]).includes(departmentId) ? departmentId : "UNSPECIFIED";
+}
 
 /** 단일 선택 카드 (예약 여부 / 초진·재진 / 진료과 목록) — 체크박스 선택 표시. */
 const choiceCard = (group: string, value: string, title: string, desc: string, selected: boolean) => `
@@ -208,7 +219,7 @@ const choiceCard = (group: string, value: string, title: string, desc: string, s
     </span>
   </button>`;
 
-/** 진료과 직접 선택 화면 — "다른 진료과를 선택할래요"를 고르면 10개 진료과 목록이 펼쳐집니다. */
+/** 진료과 직접 선택 화면 — "다른 진료과를 선택할래요"를 고르면 공식 6개 진료과가 2열로 펼쳐집니다. */
 export function departmentListScreenHTML(selected: string, settings: AccessibilityState = {}): string {
   const simple = !!settings["SIMPLE_STEPS"];
   return `
@@ -219,7 +230,9 @@ export function departmentListScreenHTML(selected: string, settings: Accessibili
     <h1 class="title-lg">진료과를<br />골라주세요</h1>
     <p class="subtitle">안내받을 진료과를 직접 선택해 주세요</p>
     ${calmNote(simple)}
-    ${DEPARTMENTS.map((d) => choiceCard("department", d.value, d.title, "", selected === d.value)).join("")}
+    <div class="dept-grid">
+      ${DEPARTMENTS.map((d) => choiceCard("department", d.value, d.title, "", selected === d.value)).join("")}
+    </div>
   </section>${nextButton("다음", selected !== "", simple)}`;
 }
 

@@ -756,6 +756,16 @@ html.simple-steps .confirm-overlay { animation: calm-fade 0.3s ease; }
 }
 .dept-card.is-selected .dept-checkbox { border-color: var(--brand); background: var(--brand); }
 
+.dept-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-top: 14px;
+}
+.dept-grid .dept-card {
+  margin-top: 0;
+}
+
 .fontsize-inline.block { margin-top: 16px; }
 .fontsize-chip { border-radius: 14px; }
 .fontsize-chip.is-selected { border-color: var(--brand); background: #EAF3F8; color: var(--brand); }
