@@ -16,7 +16,7 @@ cd kiobridge-simulation-kit-v5.1.4/workspace/LEEKIMIMJUNG
 docker compose up -d --build
 ```
 
-- 접속: `http://<라즈베리파이 IP>:8080`
+- 접속: `http://<라즈베리파이 IP>:1001`
 - 끄기: `docker compose down`
 - 다시 켜기: `docker compose up -d` (재빌드 필요 없으면 `--build` 생략)
 - 코드 바뀐 뒤 반영: `docker compose up -d --build`
@@ -24,6 +24,10 @@ docker compose up -d --build
 
 `docker-compose.yml`이 `restart: unless-stopped`로 되어 있어서, 라즈베리파이가
 재부팅돼도 자동으로 다시 켜집니다.
+
+### 포트가 겹칠 때
+1001번이 이미 쓰이고 있으면 `docker-compose.yml`의 `"1001:80"`을 `"1002:80"`으로
+바꾸고 다시 `docker compose up -d --build` 하면 됩니다.
 
 ### 아키텍처 참고
 `node:20-alpine`·`nginx:alpine` 모두 공식 이미지가 arm64를 지원해서, 라즈베리파이
@@ -45,23 +49,23 @@ npm run build
 
 ```bash
 # 가장 간단한 방법 (Node 있으면 별도 설치 없이)
-npx serve dist -l 8080
+npx serve dist -l 1001
 
 # 또는 Python이 있으면
-cd dist && python3 -m http.server 8080
+cd dist && python3 -m http.server 1001
 ```
 
 ## 외부(심사위원)에게 공개하기
 
 같은 와이파이가 아니면 라즈베리파이의 사설 IP로는 접속이 안 됩니다. 아래 중 하나를 쓰세요.
 
-- **공유기 포트포워딩**: 라즈베리파이 IP:8080 → 공유기 외부 포트로 포워딩 (가장 직접적, 네트워크 환경에 따라 막힐 수 있음)
+- **공유기 포트포워딩**: 라즈베리파이 IP:1001 → 공유기 외부 포트로 포워딩 (가장 직접적, 네트워크 환경에 따라 막힐 수 있음)
 - **Cloudflare Tunnel**(추천, 무료, 포트포워딩 불필요):
   ```bash
   # 라즈베리파이에서
   curl -L https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-arm64 -o cloudflared
   chmod +x cloudflared
-  ./cloudflared tunnel --url http://localhost:8080
+  ./cloudflared tunnel --url http://localhost:1001
   ```
   실행하면 `https://xxxx.trycloudflare.com` 같은 임시 공개 URL이 바로 나옵니다 — 발표자료의 "배포 링크"에 이 주소를 쓰면 됩니다.
 
@@ -75,7 +79,7 @@ cd dist && python3 -m http.server 8080
 
 ## 확인 체크리스트 (배포 후)
 
-- [ ] `http://<IP>:8080` (또는 Cloudflare Tunnel 주소) 접속 시 "은빛 병원" 첫 화면이 뜬다
+- [ ] `http://<IP>:1001` (또는 Cloudflare Tunnel 주소) 접속 시 "은빛 병원" 첫 화면이 뜬다
 - [ ] "비회원으로 시작하기" → 접근성 설정 → 예약여부 → 초진/재진 → 진료과 → 승인까지 끝까지 진행된다
 - [ ] 승인 후 "안내가 끝났어요" 완료 화면이 뜨고, "처음부터 다시 시작하기"로 세션이 리셋된다
 - [ ] 브라우저 개발자도구 콘솔에 `participant-submission (데모, 실제 제출 아님)` 로그가 찍힌다 (실제 데이터가 만들어지는지 확인용 — 제출용 JSON은 이 데모가 아니라 `npm run participant:validate`로 별도 생성)

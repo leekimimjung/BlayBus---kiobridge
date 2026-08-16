@@ -6,5 +6,5 @@ services:
       dockerfile: web-app/Dockerfile
     container_name: leekimimjung-web
     ports:
-      - "8080:80"
+      - "1001:80"
     restart: unless-stopped
