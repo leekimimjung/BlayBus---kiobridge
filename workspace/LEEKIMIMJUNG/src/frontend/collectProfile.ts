@@ -760,28 +760,23 @@ async function renderVisitTypeScreen(settings: AccessibilityState = {}, initial 
 }
 
 /**
- * 진료과 선택 화면 — 추천(정형외과) 또는 "다른 진료과" 10개 목록에서 직접 선택.
- * "다른 진료과를 선택할래요"를 고르면 진료과 목록 화면으로 이동해 사용자가 직접 고릅니다.
+ * 진료과 선택 화면 — 병원 실제 진료과 목록에서 사용자가 직접 고릅니다.
+ * 🚨 STEP1(정보 수집) 시점에는 아직 추천 엔진(STEP4·5)이 돌기 전이라 어떤 과도
+ * "추천"이라고 보여줄 근거가 없습니다. 예전엔 정형외과를 기본값으로 미리 보여주는
+ * 화면이 있었는데, 실제로는 사용자 입력과 무관하게 항상 정형외과였고 뒤로가기도
+ * 없어서 증상 기반 자동매칭처럼 보일 위험이 있었음 — 그래서 뺐습니다. 실제 추천은
+ * STEP8(collectUserDecision)에서 recommend()가 계산한 결과로만 보여줍니다.
  */
 async function renderDepartmentScreen(settings: AccessibilityState = {}, initial = ""): Promise<{ departmentId: string } | typeof BACK> {
   const mount = resolveMount();
   const simple = !!settings["SIMPLE_STEPS"];
-  // 다시 열 때(✕) 이전에 고른 진료과가 추천 카드(정형외과)가 아니면 목록 화면부터 시작해
-  // 선택 상태를 그대로 보여줍니다. 아니면 추천/직접선택 2개 화면에서 시작합니다.
-  let mode: "CHOICE" | "LIST" = initial && initial !== "OTHER" && initial !== RECOMMENDED_DEPARTMENT.value ? "LIST" : "CHOICE";
-  let selected = initial;
+  let selected = initial === "OTHER" ? "" : initial;
   let paused = false;
   let staffAsked = false;
   return new Promise((resolve) => {
     const draw = () => {
       setSimpleSteps(simple);
-      mount.innerHTML = shell(
-        paused
-          ? pauseScreenHTML(staffAsked)
-          : mode === "CHOICE"
-            ? departmentChoiceHTML(selected, settings)
-            : departmentListScreenHTML(selected, settings),
-      );
+      mount.innerHTML = shell(paused ? pauseScreenHTML(staffAsked) : departmentListScreenHTML(selected, settings));
       focusFirst(mount);
     };
     function onClick(event: MouseEvent) {
@@ -810,24 +805,11 @@ async function renderDepartmentScreen(settings: AccessibilityState = {}, initial
         return;
       }
       if (action === "back") {
-        // 목록 화면의 뒤로가기는 추천 화면(CHOICE)으로, 추천 화면의 뒤로가기는 이전 페이지(초진/재진)로 갑니다.
-        if (mode === "LIST") {
-          mode = "CHOICE";
-          selected = "";
-          draw();
-        } else {
-          mount.removeEventListener("click", onClick);
-          resolve(BACK);
-        }
+        mount.removeEventListener("click", onClick);
+        resolve(BACK);
         return;
       }
       if (action === "next" && selected) {
-        if (mode === "CHOICE" && selected === "OTHER") {
-          mode = "LIST";
-          selected = "";
-          draw();
-          return;
-        }
         // 진료과 다음에는 최종 안내 확인(최종적으로 안내 받으시겠어요?)이 이어지므로 진행 확인 모달을 띄우지 않습니다.
         mount.removeEventListener("click", onClick);
         resolve({ departmentId: selected });
