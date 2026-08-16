@@ -16,6 +16,9 @@ services:
   cloudflared:
     image: cloudflare/cloudflared:latest
     container_name: leekimimjung-tunnel
+    # 공식 이미지는 기본적으로 non-root(65532)로 도는데, 마운트한 ~/.cloudflared는
+    # 호스트에서 사용자 전용 권한(600)이라 그 상태로는 못 읽습니다 — root로 실행해서 해결.
+    user: "0:0"
     command: tunnel --config /etc/cloudflared/config.yml run
     volumes:
       - ${HOME}/.cloudflared:/etc/cloudflared:ro
