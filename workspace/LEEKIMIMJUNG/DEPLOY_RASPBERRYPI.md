@@ -1,4 +1,4 @@
-# 라즈베리파이 배포 가이드 — 은빛 병원 무인 접수 안내 (LEEKIMIMJUNG)
+# 라즈베리파이 배포 가이드 — 이김임정 병원 무인 접수 안내 (LEEKIMIMJUNG)
 
 `web-app/`은 완전히 정적인 사이트로 빌드됩니다 (외부 API·백엔드 서버 없음).
 hospital fixture(`web-app/src/hospital.fixture.json`)를 번들에 정적으로 포함해서,
@@ -134,7 +134,7 @@ docker compose logs -f cloudflared   # 터널 연결 상태 확인
 
 ## 확인 체크리스트 (배포 후)
 
-- [ ] `http://<IP>:1001` (또는 Cloudflare Tunnel 주소) 접속 시 "은빛 병원" 첫 화면이 뜬다
+- [ ] `http://<IP>:1001` (또는 Cloudflare Tunnel 주소) 접속 시 "이김임정 병원" 첫 화면이 뜬다
 - [ ] "비회원으로 시작하기" → 접근성 설정 → 예약여부 → 초진/재진 → 진료과 → 승인까지 끝까지 진행된다
 - [ ] 승인 후 "안내가 끝났어요" 완료 화면이 뜨고, "처음부터 다시 시작하기"로 세션이 리셋된다
 - [ ] 브라우저 개발자도구 콘솔에 `participant-submission (데모, 실제 제출 아님)` 로그가 찍힌다 (실제 데이터가 만들어지는지 확인용 — 제출용 JSON은 이 데모가 아니라 `npm run participant:validate`로 별도 생성)
