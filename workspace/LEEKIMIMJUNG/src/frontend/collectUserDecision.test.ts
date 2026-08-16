@@ -13,8 +13,23 @@ test("진료과 추천 화면: 기본(확정 추천)이면 '추천 정확도 높
   const html = departmentChoiceHTML("");
   assert.match(html, /추천 정확도 높음/);
   assert.match(html, /정형외과로<br \/>안내해 드릴게요/);
-  assert.match(html, /왜 정형외과인가요/);
+  assert.match(html, /이렇게 안내해 드리는 이유예요/);
+  assert.doesNotMatch(html, /왜 정형외과인가요/); // 사용자가 방금 직접 말한 걸 되묻는 것처럼 보이는 순환적 문구 — 뺌
   assert.doesNotMatch(html, /직접 확인이 필요해요/);
+});
+
+test("진료과 추천 화면: 사용자가 STEP1에서 이미 말한 진료과를 그대로 되묻지 않고, 후보의 구체적인 창구 이름을 보여준다", () => {
+  const recommended = {
+    candidateId: "HOS-002",
+    title: "예약 초진 접수",
+    department: "정형외과",
+    floor: "2층 · 정형외과 접수 데스크",
+    reasons: [],
+  };
+  const html = departmentChoiceHTML("", {}, recommended, false);
+  // 헤딩은 "정형외과로"(사용자가 방금 말한 것)가 아니라 "예약 초진 접수로"(새 정보: 어느 창구인지)
+  assert.match(html, /예약 초진 접수로<br \/>안내해 드릴게요/);
+  assert.doesNotMatch(html, /정형외과로<br \/>안내해 드릴게요/);
 });
 
 test("진료과 추천 화면: uncertain=true(진료과 미확정 → 일반 안내)면 확정 추천처럼 보이지 않는다", () => {

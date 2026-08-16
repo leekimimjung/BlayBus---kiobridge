@@ -193,10 +193,10 @@ export function departmentChoiceHTML(
     </div>
     <h1 class="title-lg">${uncertain
       ? "딱 맞는 접수 경로를<br />찾지 못했어요"
-      : `${recommended.department}로<br />안내해 드릴게요`}</h1>
+      : `${recommended.title}로<br />안내해 드릴게요`}</h1>
     ${calmNote(simple)}
     <div class="q-card">
-      <strong>${uncertain ? "어떻게 도와드릴까요?" : `왜 ${recommended.department}인가요?`}</strong>
+      <strong>${uncertain ? "어떻게 도와드릴까요?" : "이렇게 안내해 드리는 이유예요"}</strong>
       <p>${reason}</p>
     </div>
     <button type="button" class="dept-card ${selected === recommended.candidateId ? "is-selected" : ""}" data-group="department" data-value="${recommended.candidateId}">
@@ -426,7 +426,7 @@ async function renderApprovalButtons(_rec: Recommendation): Promise<"APPROVE" | 
         </div>
         <h1 class="title-lg">${uncertain
           ? "직원에게 진료과를<br />확인받으실래요?"
-          : `${display.department}로<br />안내해 드릴까요?`}</h1>
+          : `${display.title}로<br />안내해 드릴까요?`}</h1>
         <p class="subtitle">${uncertain
           ? "입력하신 조건에 딱 맞는 접수 경로를 찾지 못했어요. 안내데스크 직원이 직접 확인해 드려요."
           : "최종 확인이에요. 원하는 선택지를 골라주세요."}</p>
@@ -434,7 +434,7 @@ async function renderApprovalButtons(_rec: Recommendation): Promise<"APPROVE" | 
           <span class="checkbox" aria-hidden="true">✓</span>
           <span class="option-copy">
             <strong>${uncertain ? "네, 확인받을게요" : "네, 안내받을게요"}</strong>
-            <small>${uncertain ? "수락 — 안내데스크로 이동해요" : `수락 — ${display.department} 안내를 시작해요`}</small>
+            <small>${uncertain ? "수락 — 안내데스크로 이동해요" : `수락 — ${display.title} 안내를 시작해요`}</small>
           </span>
         </button>
         <button type="button" class="option-card" data-action="pick-alternative">

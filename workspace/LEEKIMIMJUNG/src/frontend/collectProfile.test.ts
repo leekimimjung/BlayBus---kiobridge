@@ -208,7 +208,7 @@ test("진료과(추천) 화면: Figma 시안 구조(추천 카드 + 다른 진�
   assert.equal(RECOMMENDED_DEPARTMENT.value, "ORTHOPEDICS");
   const html = departmentChoiceHTML("");
   assert.match(html, /정형외과로/);
-  assert.match(html, /왜 정형외과인가요/);
+  assert.match(html, /이렇게 안내해 드리는 이유예요/);
   assert.match(html, /2층 · 정형외과 접수 데스크/);
   assert.match(html, /다른 진료과를 선택할래요/);
   assert.match(html, /추천 정확도 높음/);
