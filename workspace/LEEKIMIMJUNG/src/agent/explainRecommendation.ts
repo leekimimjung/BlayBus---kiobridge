@@ -59,6 +59,16 @@ const DEPARTMENT_LABEL: Record<string, string> = {
   HEALTH_SCREENING: "건강검진센터",
 };
 
+/** supportModes enum 값을 사람이 읽는 문구로. unmetConditions에 이 값 그대로가 섞여 나올 수 있어 필요합니다. */
+const SUPPORT_MODE_LABEL: Record<string, string> = {
+  LARGE_TEXT: "큰 글씨",
+  HEARING_SUPPORT: "청각 지원",
+  VISUAL_GUIDANCE: "시각 안내",
+  SIMPLE_STEPS: "차분한 안내",
+  STAFF_HELP: "직원 도움",
+  GUARDIAN_MODE: "보호자 동행",
+};
+
 /** 참가팀 서비스가 수집한 원본 입력 (형식 자유 — 웹폼/음성/QR/챗봇 무엇이든). */
 export type RawUserInput = Record<string, unknown>;
 
@@ -107,7 +117,8 @@ export function explainRecommendation(_rec: Recommendation, _ctx: SessionContext
   }
 
   if (_rec.unmetConditions && _rec.unmetConditions.length > 0) {
-    reasons.push(`요청하신 지원 중 일부(${_rec.unmetConditions.join(", ")})는 이 경로에서 제공되지 않을 수 있습니다.`);
+    const unmetLabels = _rec.unmetConditions.map((mode) => SUPPORT_MODE_LABEL[mode] ?? mode);
+    reasons.push(`요청하신 지원 중 일부(${unmetLabels.join(", ")})는 이 경로에서 제공되지 않을 수 있습니다.`);
   }
 
   return reasons;
