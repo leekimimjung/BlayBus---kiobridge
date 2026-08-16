@@ -89,30 +89,40 @@ cloudflared tunnel create leekimimjung
 cloudflared tunnel route dns leekimimjung leekimimjung.bssm.dev
 
 # 5. 터널 설정 파일 작성 (홈 디렉터리에 ~/.cloudflared/config.yml)
+#    credentials-file 의 <사용자명>/<터널 UUID> 는 3번 create 결과에 실제로 나온 값으로 바꾸세요.
+#    service 는 http://web:80 — docker compose가 만드는 web 컨테이너를 그대로 가리킵니다
+#    (localhost 아님 — cloudflared 도 컨테이너로 뜨기 때문에 컨테이너 이름으로 통신합니다).
 mkdir -p ~/.cloudflared
 cat > ~/.cloudflared/config.yml <<'YAML'
 tunnel: leekimimjung
 credentials-file: /home/<사용자명>/.cloudflared/<터널 UUID>.json
 ingress:
   - hostname: leekimimjung.bssm.dev
-    service: http://localhost:1001
+    service: http://web:80
   - service: http_status:404
 YAML
-# ↑ <사용자명>/<터널 UUID>는 3번 create 결과에 실제로 출력된 값으로 바꿔주세요.
-
-# 6. 실행 (테스트용, 터미널 켜둔 동안만 동작)
-cloudflared tunnel run leekimimjung
-
-# 7. 재부팅해도 계속 떠 있게 하려면 시스템 서비스로 등록
-sudo cloudflared service install
-sudo systemctl enable --now cloudflared
 ```
 
-이후 `https://leekimimjung.bssm.dev`로 접속하면 라즈베리파이의 1001 포트(도커 컨테이너)로
-바로 연결됩니다. 발표자료 "배포 링크"엔 이 주소를 쓰면 됩니다.
+### 6. web + 터널을 한 번에 docker compose로 켜고 끄기
 
-**주의**: 3번(`tunnel login`)은 브라우저 인증이 필요해서 제가 대신 실행할 수 없어요 —
-라즈베리파이(또는 SSH로 접속한 터미널)에서 직접 실행해 주세요. 나머지는 그대로 복붙하면 됩니다.
+`docker-compose.yml`에 `cloudflared` 서비스가 이미 포함되어 있어서, 5번까지(로그인·터널
+생성·DNS 연결·config.yml 작성)만 한 번 해두면 그다음부턴 컨테이너 하나 켜듯 같이 관리할 수
+있습니다. `cloudflared tunnel run`을 터미널에 따로 띄워둘 필요가 없습니다.
+
+```bash
+docker compose up -d --build   # web + cloudflared 터널 둘 다 기동
+docker compose down            # 둘 다 종료
+docker compose logs -f cloudflared   # 터널 연결 상태 확인
+```
+
+재부팅돼도 `restart: unless-stopped` 덕분에 Docker가 켜져 있으면 둘 다 자동으로 다시 뜹니다.
+
+이후 `https://leekimimjung.bssm.dev`로 접속하면 라즈베리파이의 `web` 컨테이너로 바로
+연결됩니다. 발표자료 "배포 링크"엔 이 주소를 쓰면 됩니다.
+
+**주의**: 2번(`tunnel login`)은 브라우저 인증이 필요해서 제가 대신 실행할 수 없어요 —
+라즈베리파이(또는 SSH로 접속한 터미널)에서 직접 실행해 주세요. 2~5번은 최초 한 번만 하면
+되고, 그다음부터는 6번의 `docker compose` 명령만으로 켜고 끌 수 있습니다.
 
 ## 테스트 계정 / 시나리오
 

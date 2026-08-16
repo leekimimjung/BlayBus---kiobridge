@@ -1,4 +1,8 @@
 # workspace/LEEKIMIMJUNG/ 에서 실행하세요: docker compose up -d / docker compose down
+# cloudflared 서비스를 쓰려면 먼저 라즈베리파이에서 `cloudflared tunnel login` ~
+# `tunnel route dns` 까지 한 번은 CLI로 실행해서 ~/.cloudflared 에 인증서·터널
+# credentials·config.yml 이 만들어져 있어야 합니다 (DEPLOY_RASPBERRYPI.md 참고).
+# config.yml의 service 값은 host가 아니라 컨테이너 이름을 써야 합니다: http://web:80
 services:
   web:
     build:
@@ -7,4 +11,14 @@ services:
     container_name: leekimimjung-web
     ports:
       - "1001:80"
+    restart: unless-stopped
+
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    container_name: leekimimjung-tunnel
+    command: tunnel --config /etc/cloudflared/config.yml run
+    volumes:
+      - ${HOME}/.cloudflared:/etc/cloudflared:ro
+    depends_on:
+      - web
     restart: unless-stopped
