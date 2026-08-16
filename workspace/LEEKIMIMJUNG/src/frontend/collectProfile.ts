@@ -461,14 +461,25 @@ function resolveMount(): HTMLElement {
   return document.querySelector<HTMLElement>("#app") ?? document.body;
 }
 
+// preventScroll — 기본 focus()는 포커스된 요소를 보이는 위치로 스크롤시켜서,
+// 목록 아래쪽 항목을 누른 직후에도 화면이 맨 위로 튀어 올라가는 원인이 됩니다.
+// 스크롤 위치는 renderWithScrollPreserved()가 따로 복원합니다.
 function focusFirst(mount: HTMLElement): void {
-  const el =
-    mount.querySelector<HTMLElement>("[data-autofocus]") ??
-    mount.querySelector<HTMLElement>("button");
-  // preventScroll — 기본 focus()는 포커스된 요소를 보이는 위치로 스크롤시켜서,
-  // 목록 아래쪽 항목을 누른 직후에도 화면이 맨 위(첫 버튼)로 튀어 올라가는
-  // 원인이 됩니다. 스크롤 위치는 renderWithScrollPreserved()가 따로 복원합니다.
-  if (el) el.focus({ preventScroll: true });
+  const explicit = mount.querySelector<HTMLElement>("[data-autofocus]");
+  if (explicit) {
+    explicit.focus({ preventScroll: true });
+    return;
+  }
+  // 화면이 바뀔 때마다 뒤로가기 같은 주변 버튼이 아니라 새 화면 제목으로 포커스를 옮겨서,
+  // 키보드/스크린리더 사용자가 지금 어느 화면인지 먼저 알 수 있게 합니다
+  // (DOM 순서상 뒤로가기 버튼이 맨 앞이라 예전엔 항상 거기로 포커스가 갔었음).
+  const heading = mount.querySelector<HTMLElement>("h1, h2");
+  if (heading) {
+    if (!heading.hasAttribute("tabindex")) heading.setAttribute("tabindex", "-1");
+    heading.focus({ preventScroll: true });
+    return;
+  }
+  mount.querySelector<HTMLElement>("button")?.focus({ preventScroll: true });
 }
 
 /**

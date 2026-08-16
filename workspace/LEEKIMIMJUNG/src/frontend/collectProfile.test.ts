@@ -247,13 +247,12 @@ test("공황장애 모드: 예약·초진재진·진료과 화면에 차분한 �
   assert.doesNotMatch(departmentChoiceHTML(""), /data-action="pause"/);
 });
 
-test("공황장애 모드: 모든 화면(설정·예약·초진재진·진료과 추천·진료과 목록)에 '이전 페이지로 돌아가기' 링크를 보여준다", () => {
+test("공황장애 모드: 설정·예약·초진재진·진료과 추천 화면에 '이전 페이지로 돌아가기' 링크를 보여준다", () => {
   const screens = [
     accessibilityScreenHTML({ SIMPLE_STEPS: true }),
     reservationScreenHTML("", { SIMPLE_STEPS: true }),
     visitTypeScreenHTML("", { SIMPLE_STEPS: true }),
     departmentChoiceHTML("", { SIMPLE_STEPS: true }),
-    departmentListScreenHTML("", { SIMPLE_STEPS: true }),
   ];
   for (const html of screens) {
     assert.match(html, /class="back-link-text" data-action="back"/);
@@ -263,6 +262,12 @@ test("공황장애 모드: 모든 화면(설정·예약·초진재진·진료과
   assert.doesNotMatch(visitTypeScreenHTML(""), /back-link-text/);
   assert.doesNotMatch(departmentChoiceHTML(""), /back-link-text/);
   assert.doesNotMatch(accessibilityScreenHTML({}), /back-link-text/);
+});
+
+test("진료과 목록 화면: '‹' 뒤로가기가 이미 항상 있어서, 텍스트 뒤로가기 링크를 중복으로 보여주지 않는다", () => {
+  const html = departmentListScreenHTML("", { SIMPLE_STEPS: true });
+  assert.match(html, /class="back-link" data-action="back"/);
+  assert.doesNotMatch(html, /back-link-text/);
 });
 
 test("잠시 쉬기 화면: 호흡 가이드 + 자발적 직원 호출 선택지를 보여준다", () => {

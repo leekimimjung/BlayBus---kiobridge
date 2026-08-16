@@ -176,7 +176,7 @@ export function departmentChoiceHTML(
   const reason = recommended.reasons.length > 0
     ? recommended.reasons.join("<br />") + "<br />다르다면 아래에서 직접 선택할 수 있어요."
     : uncertain
-      ? "말씀해주신 내용만으로는 어느 과인지 정하지 않았어요.<br />괜찮으시면 안내데스크에서 확인해 드릴게요."
+      ? "입력하신 조건에 정확히 맞는 접수 경로를 찾지 못했어요.<br />괜찮으시면 안내데스크에서 확인해 드릴게요."
       : "입력하신 정보를 바탕으로 안내해 드려요.<br />다르다면 아래에서 직접 선택할 수 있어요.";
   return `
   ${progress(3)}
@@ -192,7 +192,7 @@ export function departmentChoiceHTML(
       ${backLink(simple)}
     </div>
     <h1 class="title-lg">${uncertain
-      ? "어느 과인지<br />아직 정하지 않았어요"
+      ? "딱 맞는 접수 경로를<br />찾지 못했어요"
       : `${recommended.department}로<br />안내해 드릴게요`}</h1>
     ${calmNote(simple)}
     <div class="q-card">
@@ -204,7 +204,7 @@ export function departmentChoiceHTML(
       <span class="dept-copy">
         <span class="dept-title">${recommended.title}</span>
         <span class="dept-floor">${recommended.floor}</span>
-        <span class="dept-hint">${staff ? "직원이 찾아와서 안내해 드릴게요" : uncertain ? "안내데스크 직원이 어느 과인지 확인해 드려요" : "다음으로 넘어가면 길을 안내해 드려요"}</span>
+        <span class="dept-hint">${staff ? "직원이 찾아와서 안내해 드릴게요" : uncertain ? "안내데스크 직원이 직접 확인해 드려요" : "다음으로 넘어가면 길을 안내해 드려요"}</span>
       </span>
     </button>
     <button type="button" class="dept-card ${selected === "OTHER" ? "is-selected" : ""}" data-group="department" data-value="OTHER">
@@ -263,7 +263,7 @@ export function departmentListScreenHTML(selected: string, settings: Accessibili
   ${progress(3)}
   <section class="screen form-screen cp-screen">
     <button type="button" class="back-link" data-action="back" aria-label="이전으로 돌아가기">‹</button>
-    <div class="pill-row">${calmPill(simple)}${backLink(simple)}</div>
+    <div class="pill-row">${calmPill(simple)}</div>
     <h1 class="title-lg">진료과를<br />골라주세요</h1>
     <p class="subtitle">안내받을 진료과를 직접 선택해 주세요</p>
     ${calmNote(simple)}
@@ -287,13 +287,22 @@ function resolveMount(): HTMLElement {
   return document.querySelector<HTMLElement>("#app") ?? document.body;
 }
 
+// preventScroll — 안 그러면 목록 아래쪽을 눌러도 포커스가 첫 버튼으로 가면서
+// 화면이 맨 위로 튀어 오릅니다. 스크롤 위치는 renderWithScrollPreserved가 복원합니다.
 function focusFirst(mount: HTMLElement): void {
-  const el =
-    mount.querySelector<HTMLElement>("[data-autofocus]") ??
-    mount.querySelector<HTMLElement>("button");
-  // preventScroll — 안 그러면 목록 아래쪽을 눌러도 포커스가 첫 버튼으로 가면서
-  // 화면이 맨 위로 튀어 오릅니다. 스크롤 위치는 renderWithScrollPreserved가 복원합니다.
-  if (el) el.focus({ preventScroll: true });
+  const explicit = mount.querySelector<HTMLElement>("[data-autofocus]");
+  if (explicit) {
+    explicit.focus({ preventScroll: true });
+    return;
+  }
+  // 뒤로가기 같은 주변 버튼이 아니라 새 화면 제목으로 포커스를 옮깁니다 (collectProfile.ts와 동일).
+  const heading = mount.querySelector<HTMLElement>("h1, h2");
+  if (heading) {
+    if (!heading.hasAttribute("tabindex")) heading.setAttribute("tabindex", "-1");
+    heading.focus({ preventScroll: true });
+    return;
+  }
+  mount.querySelector<HTMLElement>("button")?.focus({ preventScroll: true });
 }
 
 /** mount.innerHTML 교체로 스크롤 위치가 0으로 리셋되는 것을 막습니다 (collectProfile.ts와 동일). */
@@ -419,7 +428,7 @@ async function renderApprovalButtons(_rec: Recommendation): Promise<"APPROVE" | 
           ? "직원에게 진료과를<br />확인받으실래요?"
           : `${display.department}로<br />안내해 드릴까요?`}</h1>
         <p class="subtitle">${uncertain
-          ? "진료과가 아직 정해지지 않았어요. 안내데스크 직원이 직접 확인해 드려요."
+          ? "입력하신 조건에 딱 맞는 접수 경로를 찾지 못했어요. 안내데스크 직원이 직접 확인해 드려요."
           : "최종 확인이에요. 원하는 선택지를 골라주세요."}</p>
         <button type="button" class="option-card" data-action="approve">
           <span class="checkbox" aria-hidden="true">✓</span>

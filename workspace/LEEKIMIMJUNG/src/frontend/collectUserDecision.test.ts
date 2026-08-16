@@ -28,9 +28,9 @@ test("진료과 추천 화면: uncertain=true(진료과 미확정 → 일반 안
   const html = departmentChoiceHTML("", {}, recommended, true);
   assert.match(html, /직접 확인이 필요해요/);
   assert.doesNotMatch(html, /추천 정확도 높음/);
-  assert.match(html, /어느 과인지<br \/>아직 정하지 않았어요/);
+  assert.match(html, /딱 맞는 접수 경로를<br \/>찾지 못했어요/);
   assert.doesNotMatch(html, /왜 일반 안내인가요/);
-  assert.match(html, /안내데스크 직원이 어느 과인지 확인해 드려요/);
+  assert.match(html, /안내데스크 직원이 직접 확인해 드려요/);
 });
 
 test("진료과 직접 선택 화면: 병원 실제 진료과 10개 + 잘 모르겠어요를 모두 보여준다 (증상은 묻지 않음)", () => {
