@@ -18,7 +18,7 @@ const TEAM_ID = "LEEKIMIMJUNG";
 function completionScreenHTML(approved: boolean): string {
   return `
   <header class="status-bar">
-    <div class="brand"><strong>은빛 병원</strong></div>
+    <div class="brand"><strong>이김임정 병원</strong></div>
   </header>
   <div class="page">
     <section class="screen form-screen cp-screen">
