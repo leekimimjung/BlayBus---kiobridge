@@ -1,0 +1,10 @@
+**/node_modules
+**/dist
+web-app/dist
+output
+submission-output
+team-tasks
+test-data
+tests
+*.md
+.git

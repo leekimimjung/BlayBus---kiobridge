@@ -1,0 +1,10 @@
+# workspace/LEEKIMIMJUNG/ 에서 실행하세요: docker compose up -d / docker compose down
+services:
+  web:
+    build:
+      context: .
+      dockerfile: web-app/Dockerfile
+    container_name: leekimimjung-web
+    ports:
+      - "8080:80"
+    restart: unless-stopped
