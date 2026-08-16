@@ -60,14 +60,59 @@ cd dist && python3 -m http.server 1001
 같은 와이파이가 아니면 라즈베리파이의 사설 IP로는 접속이 안 됩니다. 아래 중 하나를 쓰세요.
 
 - **공유기 포트포워딩**: 라즈베리파이 IP:1001 → 공유기 외부 포트로 포워딩 (가장 직접적, 네트워크 환경에 따라 막힐 수 있음)
-- **Cloudflare Tunnel**(추천, 무료, 포트포워딩 불필요):
+- **Cloudflare Tunnel — 임시 URL** (도메인 없이 바로 테스트할 때):
   ```bash
-  # 라즈베리파이에서
   curl -L https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-arm64 -o cloudflared
   chmod +x cloudflared
   ./cloudflared tunnel --url http://localhost:1001
   ```
-  실행하면 `https://xxxx.trycloudflare.com` 같은 임시 공개 URL이 바로 나옵니다 — 발표자료의 "배포 링크"에 이 주소를 쓰면 됩니다.
+  실행하면 `https://xxxx.trycloudflare.com` 같은 임시 공개 URL이 바로 나옵니다.
+
+### `leekimimjung.bssm.dev`로 배포하기 (추천 — bssm.dev가 Cloudflare에 있으므로)
+
+Named Cloudflare Tunnel을 쓰면 포트포워딩 없이 고정 도메인 `leekimimjung.bssm.dev`으로
+바로 붙일 수 있습니다. 라즈베리파이에서 아래를 순서대로 실행하세요.
+
+```bash
+# 1. cloudflared 설치 (arm64)
+curl -L https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-arm64 -o cloudflared
+chmod +x cloudflared
+sudo mv cloudflared /usr/local/bin/
+
+# 2. Cloudflare 계정 로그인 — 브라우저 창이 뜨면 bssm.dev가 있는 계정으로 로그인 후 승인
+cloudflared tunnel login
+
+# 3. 이름 있는 터널 생성 (leekimimjung 이라는 이름으로, UUID와 인증서(credentials.json)가 생성됨)
+cloudflared tunnel create leekimimjung
+
+# 4. leekimimjung.bssm.dev DNS 레코드를 이 터널로 자동 연결 (CNAME이 자동 생성됩니다)
+cloudflared tunnel route dns leekimimjung leekimimjung.bssm.dev
+
+# 5. 터널 설정 파일 작성 (홈 디렉터리에 ~/.cloudflared/config.yml)
+mkdir -p ~/.cloudflared
+cat > ~/.cloudflared/config.yml <<'YAML'
+tunnel: leekimimjung
+credentials-file: /home/<사용자명>/.cloudflared/<터널 UUID>.json
+ingress:
+  - hostname: leekimimjung.bssm.dev
+    service: http://localhost:1001
+  - service: http_status:404
+YAML
+# ↑ <사용자명>/<터널 UUID>는 3번 create 결과에 실제로 출력된 값으로 바꿔주세요.
+
+# 6. 실행 (테스트용, 터미널 켜둔 동안만 동작)
+cloudflared tunnel run leekimimjung
+
+# 7. 재부팅해도 계속 떠 있게 하려면 시스템 서비스로 등록
+sudo cloudflared service install
+sudo systemctl enable --now cloudflared
+```
+
+이후 `https://leekimimjung.bssm.dev`로 접속하면 라즈베리파이의 1001 포트(도커 컨테이너)로
+바로 연결됩니다. 발표자료 "배포 링크"엔 이 주소를 쓰면 됩니다.
+
+**주의**: 3번(`tunnel login`)은 브라우저 인증이 필요해서 제가 대신 실행할 수 없어요 —
+라즈베리파이(또는 SSH로 접속한 터미널)에서 직접 실행해 주세요. 나머지는 그대로 복붙하면 됩니다.
 
 ## 테스트 계정 / 시나리오
 
