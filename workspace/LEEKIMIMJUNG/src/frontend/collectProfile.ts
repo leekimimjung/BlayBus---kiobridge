@@ -49,10 +49,10 @@ export {
 
 /** 무로그인 QR 프로필 — docs/LOGINLESS_QR_PROFILE_GUIDE.md. Mock QR + 기기 내 접근성 설정 저장/조회/삭제. */
 import {
-  buildMockQrPayload, loadDeviceProfile, saveDeviceProfile, clearDeviceProfile,
+  buildMockQrPayload, loadDeviceProfile, saveDeviceProfile, clearDeviceProfile, renderMockQrCodeDataUrl,
 } from "./deviceProfile.ts";
 import type { MockQrPayload, StoredDeviceProfile } from "./deviceProfile.ts";
-export { buildMockQrPayload, loadDeviceProfile, saveDeviceProfile, clearDeviceProfile };
+export { buildMockQrPayload, loadDeviceProfile, saveDeviceProfile, clearDeviceProfile, renderMockQrCodeDataUrl };
 
 /** 글자 크기 3단계 — "글씨 크게" 설정에서 고릅니다. */
 export type FontScale = "NORMAL" | "LARGE" | "XLARGE";
@@ -110,11 +110,39 @@ export const VISIT_TYPES = [
 // 공통 UI 헬퍼 — 같은 폴더의 style.css 클래스를 그대로 재사용합니다.
 // ══════════════════════════════════════════════════════════════
 
-const header = () => `
+/** 실제 현재 날짜/시각으로 헤더 시계를 표시합니다 (예전엔 "6월 15일 3:36" 고정값이었음). */
+function formatClock(d: Date): { date: string; time: string } {
+  const date = new Intl.DateTimeFormat("ko-KR", { month: "long", day: "numeric" }).format(d);
+  const time = new Intl.DateTimeFormat("ko-KR", { hour: "numeric", minute: "2-digit", hour12: true }).format(d);
+  return { date, time };
+}
+
+let clockTickingStarted = false;
+/** 화면을 다시 그려도(mount.innerHTML 교체) 시계 DOM은 매번 새로 생기므로, 매 tick마다 다시 찾아서 갱신합니다. */
+function ensureClockTicking(): void {
+  if (clockTickingStarted || typeof document === "undefined") return;
+  clockTickingStarted = true;
+  const tick = () => {
+    const { date, time } = formatClock(new Date());
+    const clock = document.querySelector<HTMLElement>(".clock");
+    const dateEl = clock?.querySelector<HTMLElement>("small");
+    const timeEl = clock?.querySelector<HTMLElement>("strong");
+    if (dateEl) dateEl.textContent = date;
+    if (timeEl) timeEl.textContent = time;
+  };
+  tick();
+  setInterval(tick, 10_000);
+}
+
+const header = () => {
+  ensureClockTicking();
+  const { date, time } = formatClock(new Date());
+  return `
   <header class="status-bar">
     <div class="brand"><span class="brand-mark">${heroMarkSvg}</span><strong>은빛 병원</strong></div>
-    <div class="clock"><small>6월 15일</small> <strong>3:36</strong></div>
+    <div class="clock"><small>${date}</small> <strong>${time}</strong></div>
   </header>`;
+};
 
 const progress = (current: number) => `
   <div class="progress" aria-label="진행 단계 ${current + 1}/5">
@@ -261,20 +289,29 @@ export function loginChoiceScreenHTML(): string {
  * QR 인식 영역을 누르면 예시 QR 내용(환경 ID·버전·일회용 값만)을 보여주고,
  * 그걸 확인한 뒤에만 "완료"가 활성화됩니다 — 아무것도 안 눌러도 되고, 눌러도 개인정보는 없습니다.
  */
-export function qrAuthScreenHTML(payload: MockQrPayload | null = null): string {
+export function qrAuthScreenHTML(
+  payload: MockQrPayload | null = null,
+  qrImageDataUrl: string | null = null,
+  generating = false,
+): string {
+  const qrBoxContent = qrImageDataUrl
+    ? `<img src="${qrImageDataUrl}" alt="예시 QR 코드 — 카메라로 스캔해 보세요" width="220" height="220" />`
+    : generating
+      ? "QR 만드는 중…"
+      : "예시 QR 읽기";
   return `
   <section class="screen form-screen cp-screen">
     <button type="button" class="back-link" data-action="back" aria-label="메인으로 돌아가기">‹</button>
     <h1 class="title-lg">QR코드로<br />로그인/회원가입</h1>
     <p class="qr-subtitle">로그인과 회원가입이 한번에 가능해요.</p>
-    <button type="button" class="qr-box" data-action="qr-scan" role="img" aria-label="QR 코드 인식 영역 — 눌러서 예시 QR을 읽어보세요">
-      ${payload ? "" : "예시 QR 읽기"}
+    <button type="button" class="qr-box ${qrImageDataUrl ? "has-image" : ""}" data-action="qr-scan" role="img" aria-label="QR 코드 인식 영역 — 눌러서 예시 QR을 만들어 보세요" ${qrImageDataUrl ? "disabled" : ""}>
+      ${qrBoxContent}
     </button>
     ${payload
       ? `<pre class="qr-payload" aria-label="QR 내용">${JSON.stringify(payload, null, 2)}</pre>
-    <p class="qr-note">QR에는 환경 정보와 일회용 값만 들어 있어요.<br />이름·연락처 같은 개인정보는 담지 않아요.</p>`
+    <p class="qr-note">진짜로 스캔되는 QR이에요 — 카메라로 찍어보면 위 내용이 그대로 나와요.<br />QR에는 환경 정보와 일회용 값만 들어 있고, 이름·연락처 같은 개인정보는 담지 않아요.</p>`
       : ""}
-  </section>${nextButton("완료", !!payload)}`;
+  </section>${nextButton("완료", !!qrImageDataUrl)}`;
 }
 
 /**
@@ -428,7 +465,24 @@ function focusFirst(mount: HTMLElement): void {
   const el =
     mount.querySelector<HTMLElement>("[data-autofocus]") ??
     mount.querySelector<HTMLElement>("button");
-  if (el) el.focus();
+  // preventScroll — 기본 focus()는 포커스된 요소를 보이는 위치로 스크롤시켜서,
+  // 목록 아래쪽 항목을 누른 직후에도 화면이 맨 위(첫 버튼)로 튀어 올라가는
+  // 원인이 됩니다. 스크롤 위치는 renderWithScrollPreserved()가 따로 복원합니다.
+  if (el) el.focus({ preventScroll: true });
+}
+
+/**
+ * mount.innerHTML을 교체하면 스크롤 가능한 .cp-screen이 통째로 새로 생겨서
+ * 스크롤 위치가 항상 0으로 리셋됩니다 — 목록 아래쪽 항목을 클릭할 때마다
+ * 화면이 맨 위로 튀어 오르는 버그의 원인. 교체 전 스크롤 위치를 저장했다가
+ * 교체 후 그대로 복원합니다.
+ */
+function renderWithScrollPreserved(mount: HTMLElement, html: string): void {
+  const prevScroller = mount.querySelector<HTMLElement>(".cp-screen");
+  const scrollTop = prevScroller?.scrollTop ?? 0;
+  mount.innerHTML = html;
+  const nextScroller = mount.querySelector<HTMLElement>(".cp-screen");
+  if (nextScroller) nextScroller.scrollTop = scrollTop;
 }
 
 function closestButton(target: EventTarget | null): HTMLElement | null {
@@ -502,10 +556,14 @@ async function renderLoginChoiceScreen(): Promise<{ loggedIn: boolean; auth: str
   let mode: "MAIN" | "QR" = "MAIN";
   let staffAlert = false;
   let qrPayload: MockQrPayload | null = null;
+  let qrImageDataUrl: string | null = null;
+  let qrGenerating = false;
   return new Promise((resolve) => {
     const draw = () => {
-      const content = shell(mode === "MAIN" ? loginChoiceScreenHTML() : qrAuthScreenHTML(qrPayload));
-      mount.innerHTML = staffAlert ? `${content}${staffAlertOverlayHTML()}` : content;
+      const content = shell(
+        mode === "MAIN" ? loginChoiceScreenHTML() : qrAuthScreenHTML(qrPayload, qrImageDataUrl, qrGenerating),
+      );
+      renderWithScrollPreserved(mount, staffAlert ? `${content}${staffAlertOverlayHTML()}` : content);
       focusFirst(mount);
     };
     function onClick(event: MouseEvent) {
@@ -525,16 +583,23 @@ async function renderLoginChoiceScreen(): Promise<{ loggedIn: boolean; auth: str
       if (action === "back") {
         mode = "MAIN";
         qrPayload = null;
+        qrImageDataUrl = null;
         draw();
         return;
       }
-      if (action === "qr-scan") {
+      if (action === "qr-scan" && !qrGenerating && !qrImageDataUrl) {
         qrPayload = buildMockQrPayload();
+        qrGenerating = true;
         draw();
+        void renderMockQrCodeDataUrl(qrPayload).then((dataUrl) => {
+          qrImageDataUrl = dataUrl;
+          qrGenerating = false;
+          draw();
+        });
         return;
       }
       if (mode === "QR") {
-        if (action === "next" && qrPayload) {
+        if (action === "next" && qrImageDataUrl) {
           mount.removeEventListener("click", onClick);
           resolve({ loggedIn: true, auth: "QR" });
         }
@@ -602,7 +667,7 @@ async function renderAccessibilityScreen(loggedIn = false, initial: Accessibilit
     const draw = () => {
       setFontScale((state.fontScale ?? "NORMAL") as FontScale);
       setHighContrast(!!state["HIGH_CONTRAST"]);
-      mount.innerHTML = shell(accessibilityScreenHTML(state, expanded, loggedIn, saveToDevice, !!stored, justForgot));
+      renderWithScrollPreserved(mount, shell(accessibilityScreenHTML(state, expanded, loggedIn, saveToDevice, !!stored, justForgot)));
       focusFirst(mount);
     };
     function onClick(event: MouseEvent) {
@@ -667,7 +732,7 @@ async function renderReservationScreen(settings: AccessibilityState = {}, initia
   return new Promise((resolve) => {
     const draw = () => {
       setSimpleSteps(simple);
-      mount.innerHTML = shell(paused ? pauseScreenHTML(staffAsked) : reservationScreenHTML(selected, settings));
+      renderWithScrollPreserved(mount, shell(paused ? pauseScreenHTML(staffAsked) : reservationScreenHTML(selected, settings)));
       focusFirst(mount);
     };
     function onClick(event: MouseEvent) {
@@ -718,7 +783,7 @@ async function renderVisitTypeScreen(settings: AccessibilityState = {}, initial 
   return new Promise((resolve) => {
     const draw = () => {
       setSimpleSteps(simple);
-      mount.innerHTML = shell(paused ? pauseScreenHTML(staffAsked) : visitTypeScreenHTML(selected, settings));
+      renderWithScrollPreserved(mount, shell(paused ? pauseScreenHTML(staffAsked) : visitTypeScreenHTML(selected, settings)));
       focusFirst(mount);
     };
     function onClick(event: MouseEvent) {
@@ -776,7 +841,7 @@ async function renderDepartmentScreen(settings: AccessibilityState = {}, initial
   return new Promise((resolve) => {
     const draw = () => {
       setSimpleSteps(simple);
-      mount.innerHTML = shell(paused ? pauseScreenHTML(staffAsked) : departmentListScreenHTML(selected, settings));
+      renderWithScrollPreserved(mount, shell(paused ? pauseScreenHTML(staffAsked) : departmentListScreenHTML(selected, settings)));
       focusFirst(mount);
     };
     function onClick(event: MouseEvent) {

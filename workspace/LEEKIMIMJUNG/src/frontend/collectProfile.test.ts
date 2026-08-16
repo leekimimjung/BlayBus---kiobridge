@@ -49,17 +49,30 @@ test("QR 로그인/회원가입 화면: 돌아가기 · 완료 버튼 · QR 인�
   assert.doesNotMatch(html, /직원 호출/);
 });
 
-test("QR 화면: 스캔 전에는 '완료'가 비활성, 예시 QR을 읽으면(data-action=qr-scan) 페이로드를 보여주고 '완료'가 활성화된다", () => {
+test("QR 화면: 스캔 전엔 '완료' 비활성, 생성 중엔 로딩 문구, 이미지가 실제로 만들어지면(data-action=qr-scan) '완료'가 활성화된다", () => {
   const before = qrAuthScreenHTML();
   assert.match(before, /data-action="qr-scan"/);
   assert.match(before, /disabled/);
   assert.doesNotMatch(before, /qr-payload/);
+  assert.doesNotMatch(before, /<img/);
 
   const payload = buildMockQrPayload();
-  const after = qrAuthScreenHTML(payload);
-  assert.doesNotMatch(after, /disabled/);
-  assert.match(after, /qr-payload/);
-  assert.match(after, new RegExp(payload.sessionNonce));
+  const generating = qrAuthScreenHTML(payload, null, true);
+  assert.match(generating, /QR 만드는 중/);
+  assert.match(generating, /disabled/);
+
+  const withImage = qrAuthScreenHTML(payload, "data:image/png;base64,AAAA", false);
+  assert.match(withImage, /data-action="next" >완료/); // "완료" 버튼엔 disabled 없음
+  assert.match(withImage, /<img src="data:image\/png;base64,AAAA"/);
+  assert.match(withImage, /qr-payload/);
+  assert.match(withImage, new RegExp(payload.sessionNonce));
+});
+
+test("renderMockQrCodeDataUrl: payload를 실제로 스캔 가능한 PNG data URL QR 코드로 그린다", async () => {
+  const { renderMockQrCodeDataUrl } = await import("./deviceProfile.ts");
+  const payload = buildMockQrPayload();
+  const dataUrl = await renderMockQrCodeDataUrl(payload);
+  assert.match(dataUrl, /^data:image\/png;base64,/);
 });
 
 test("Mock QR 페이로드: 환경 ID·fixture 버전·일회용 nonce만 담고 개인정보는 없다", () => {

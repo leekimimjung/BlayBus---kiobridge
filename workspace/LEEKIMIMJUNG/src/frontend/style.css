@@ -29,12 +29,26 @@ button { font: inherit; }
 
 .app-shell {
   position: relative;
-  width: min(100%, 430px);
+  /* min() 대신 max-width + margin auto — min()을 못 읽는 브라우저에서
+     폭 제한 자체가 통째로 무시되어 화면 전체로 늘어나는 문제를 막습니다. */
+  width: 100%;
+  max-width: 430px;
+  margin: 0 auto;
+  height: 100vh;
   height: 100dvh;
   min-height: 650px;
   overflow: hidden;
   background: #f6f9fb;
   box-shadow: 0 0 30px rgb(0 0 0 / 24%);
+  transition: background-color 0.3s ease;
+}
+
+/* 고대비 모드 켜고 끌 때 색이 갑자기 뒤집히지 않고 부드럽게 전환되도록 */
+.app-shell, .app-shell *,
+.status-bar, .page, .screen, .keypad-overlay, .keypad-panel,
+.dept-card, .option-card, .q-card, .info-card, .login-field, .back-link,
+.fontsize-chip, .staff-panel, .primary-action, .secondary-action, .pill {
+  transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
 }
 
 .status-bar {
@@ -93,7 +107,8 @@ h1 em { color: #0578a6; font-style: normal; }
 .qr-subtitle { margin: 10px 0 0; color: #6f7b84; font-size: 0.75rem; font-weight: var(--fw-strong); }
 .qr-box {
   margin: 34px auto 0;
-  width: min(64%, 688px);
+  width: 64%;
+  max-width: 280px;
   aspect-ratio: 1;
   border-radius: 40px;
   background: #dfe4e8;
@@ -109,6 +124,8 @@ h1 em { color: #0578a6; font-style: normal; }
   font-weight: var(--fw-strong);
 }
 .qr-box:focus-visible { outline: 3px solid var(--brand-line); outline-offset: 3px; }
+.qr-box.has-image { background: #fff; padding: 14px; cursor: default; }
+.qr-box img { width: 100%; height: 100%; object-fit: contain; }
 .qr-payload {
   margin: 20px auto 0;
   max-width: 688px;

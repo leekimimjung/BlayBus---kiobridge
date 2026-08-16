@@ -86,11 +86,38 @@ function resolveCandidateDisplay(candidateId: string | null | undefined): { cand
     : { candidateId: candidateId ?? "", title: "일반 안내", department: "일반 안내", floor: "1층 · 종합 안내데스크" };
 }
 
-const header = () => `
+/** 실제 현재 날짜/시각으로 헤더 시계를 표시합니다 (collectProfile.ts와 동일 로직). */
+function formatClock(d: Date): { date: string; time: string } {
+  const date = new Intl.DateTimeFormat("ko-KR", { month: "long", day: "numeric" }).format(d);
+  const time = new Intl.DateTimeFormat("ko-KR", { hour: "numeric", minute: "2-digit", hour12: true }).format(d);
+  return { date, time };
+}
+
+let clockTickingStarted = false;
+function ensureClockTicking(): void {
+  if (clockTickingStarted || typeof document === "undefined") return;
+  clockTickingStarted = true;
+  const tick = () => {
+    const { date, time } = formatClock(new Date());
+    const clock = document.querySelector<HTMLElement>(".clock");
+    const dateEl = clock?.querySelector<HTMLElement>("small");
+    const timeEl = clock?.querySelector<HTMLElement>("strong");
+    if (dateEl) dateEl.textContent = date;
+    if (timeEl) timeEl.textContent = time;
+  };
+  tick();
+  setInterval(tick, 10_000);
+}
+
+const header = () => {
+  ensureClockTicking();
+  const { date, time } = formatClock(new Date());
+  return `
   <header class="status-bar">
     <div class="brand"><span class="brand-mark">${heroMarkSvg}</span><strong>은빛 병원</strong></div>
-    <div class="clock"><small>6월 15일</small> <strong>3:36</strong></div>
+    <div class="clock"><small>${date}</small> <strong>${time}</strong></div>
   </header>`;
+};
 
 const progress = (current: number) => `
   <div class="progress" aria-label="진행 단계 ${current + 1}/5">
@@ -264,7 +291,18 @@ function focusFirst(mount: HTMLElement): void {
   const el =
     mount.querySelector<HTMLElement>("[data-autofocus]") ??
     mount.querySelector<HTMLElement>("button");
-  if (el) el.focus();
+  // preventScroll — 안 그러면 목록 아래쪽을 눌러도 포커스가 첫 버튼으로 가면서
+  // 화면이 맨 위로 튀어 오릅니다. 스크롤 위치는 renderWithScrollPreserved가 복원합니다.
+  if (el) el.focus({ preventScroll: true });
+}
+
+/** mount.innerHTML 교체로 스크롤 위치가 0으로 리셋되는 것을 막습니다 (collectProfile.ts와 동일). */
+function renderWithScrollPreserved(mount: HTMLElement, html: string): void {
+  const prevScroller = mount.querySelector<HTMLElement>(".cp-screen");
+  const scrollTop = prevScroller?.scrollTop ?? 0;
+  mount.innerHTML = html;
+  const nextScroller = mount.querySelector<HTMLElement>(".cp-screen");
+  if (nextScroller) nextScroller.scrollTop = scrollTop;
 }
 
 function closestButton(target: EventTarget | null): HTMLElement | null {
@@ -290,7 +328,7 @@ async function renderRecommendationScreen(_rec: Recommendation): Promise<void> {
   return new Promise((resolve) => {
     let selected = recommended.candidateId;
     const draw = () => {
-      mount.innerHTML = shell(departmentChoiceHTML(selected, {}, recommended, uncertain));
+      renderWithScrollPreserved(mount, shell(departmentChoiceHTML(selected, {}, recommended, uncertain)));
       focusFirst(mount);
     };
     function onClick(event: MouseEvent) {
@@ -321,7 +359,7 @@ async function renderAlternativesScreen(
   let selected = "";
   return new Promise((resolve) => {
     const draw = () => {
-      mount.innerHTML = shell(`
+      renderWithScrollPreserved(mount, shell(`
       ${progress(3)}
       <section class="screen form-screen cp-screen">
         <button type="button" class="back-link" data-action="back" aria-label="이전으로 돌아가기">‹</button>
@@ -335,7 +373,7 @@ async function renderAlternativesScreen(
                 .join("")
             : `<p class="subtitle">다른 후보가 없어요. 직원 도움을 요청해 주세요.</p>`
         }
-      </section>${nextButton("다음", selected !== "", false)}`);
+      </section>${nextButton("다음", selected !== "", false)}`));
       focusFirst(mount);
     };
     function onClick(event: MouseEvent) {
@@ -369,7 +407,7 @@ async function renderApprovalButtons(_rec: Recommendation): Promise<"APPROVE" | 
   const uncertain = !!_rec.requiresReconfirmation;
   return new Promise((resolve) => {
     const draw = () => {
-      mount.innerHTML = shell(`
+      renderWithScrollPreserved(mount, shell(`
       ${progress(4)}
       <section class="screen form-screen cp-screen">
         <div class="pill-row">
@@ -378,14 +416,16 @@ async function renderApprovalButtons(_rec: Recommendation): Promise<"APPROVE" | 
             : '<span class="pill pill-acc">추천 정확도 높음</span>'}
         </div>
         <h1 class="title-lg">${uncertain
-          ? "안내데스크로<br />안내해 드릴까요?"
+          ? "직원에게 진료과를<br />확인받으실래요?"
           : `${display.department}로<br />안내해 드릴까요?`}</h1>
-        <p class="subtitle">최종 확인이에요. 원하는 선택지를 골라주세요.</p>
+        <p class="subtitle">${uncertain
+          ? "진료과가 아직 정해지지 않았어요. 안내데스크 직원이 직접 확인해 드려요."
+          : "최종 확인이에요. 원하는 선택지를 골라주세요."}</p>
         <button type="button" class="option-card" data-action="approve">
           <span class="checkbox" aria-hidden="true">✓</span>
           <span class="option-copy">
-            <strong>네, 안내받을게요</strong>
-            <small>수락 — ${display.department} 안내를 시작해요</small>
+            <strong>${uncertain ? "네, 확인받을게요" : "네, 안내받을게요"}</strong>
+            <small>${uncertain ? "수락 — 안내데스크로 이동해요" : `수락 — ${display.department} 안내를 시작해요`}</small>
           </span>
         </button>
         <button type="button" class="option-card" data-action="pick-alternative">
@@ -409,7 +449,7 @@ async function renderApprovalButtons(_rec: Recommendation): Promise<"APPROVE" | 
             <small>거절 — 이대로 안내를 마칠게요</small>
           </span>
         </button>
-      </section>`);
+      </section>`));
       focusFirst(mount);
     };
     function onClick(event: MouseEvent) {

@@ -86,3 +86,15 @@ export function buildMockQrPayload(): MockQrPayload {
     sessionNonce,
   };
 }
+
+/**
+ * payload를 실제로 스캔 가능한 QR 코드 이미지(PNG data URL)로 그립니다.
+ * qrcode 패키지는 동적 import로만 불러옵니다 — Node(participant:progress 등)는
+ * 이 함수를 호출하지 않으므로 그 경로에서는 패키지가 없어도 문제없습니다.
+ * 브라우저(web-app 빌드)에서만 실제로 실행됩니다.
+ */
+export async function renderMockQrCodeDataUrl(payload: MockQrPayload): Promise<string> {
+  // @ts-ignore — qrcode는 web-app의 브라우저 전용 의존성이라 워크스페이스 tsc 경로엔 타입이 없습니다.
+  const QRCode = await import("qrcode");
+  return QRCode.toDataURL(JSON.stringify(payload), { margin: 1, width: 220 }) as Promise<string>;
+}
