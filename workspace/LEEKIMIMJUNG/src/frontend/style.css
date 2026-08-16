@@ -149,34 +149,41 @@ h1 em { color: #0578a6; font-style: normal; }
 .options { display: grid; gap: 12px; margin-top: 28px; }
 .options.compact { gap: 14px; margin-top: 24px; }
 .option-card {
-  min-height: 67px;
-  padding: 13px 14px;
+  width: 100%;
+  margin-top: 14px;
+  padding: 18px 20px;
   display: flex;
   align-items: flex-start;
-  gap: 10px;
+  gap: 14px;
   text-align: left;
-  border: 1.5px solid #dce3e7;
-  border-radius: 7px;
+  border: 5px solid var(--card-line);
+  border-radius: 20px;
   background: #fff;
-  color: #1a232b;
+  color: var(--ink);
   cursor: pointer;
 }
-.option-card.is-selected { border-color: #1585b2; box-shadow: 0 0 0 1px rgb(21 133 178 / 8%); }
+.option-card.is-selected { border-color: var(--brand-line); box-shadow: 0 0 0 1px rgb(54 129 168 / 25%); }
+.option-card:focus-visible { outline: 3px solid var(--brand-line); outline-offset: 2px; }
 .checkbox {
-  flex: 0 0 23px;
-  height: 23px;
+  flex: none;
+  width: 30px;
+  height: 30px;
+  margin-top: 2px;
   display: grid;
   place-items: center;
-  border-radius: 4px;
-  background: #e9edef;
+  border-radius: 10px;
+  background: var(--ink-mut);
   color: #fff;
-  font-size: 0.8125rem;
+  font-size: 0.9375rem;
   font-weight: var(--fw-strong);
 }
-.is-selected .checkbox { background: #3297bd; }
-.option-copy { display: grid; gap: 3px; }
-.option-copy strong { font-size: 0.75rem; }
-.option-copy small { color: #87919a; font-size: 0.5rem; }
+.option-card[data-action="approve"] .checkbox { background: var(--acc-ink); }
+.option-card[data-action="pick-alternative"] .checkbox { background: var(--brand-line); }
+.option-card[data-action="reject"] .checkbox { background: var(--staff); }
+.is-selected .checkbox { background: var(--brand); }
+.option-copy { display: grid; gap: 4px; min-width: 0; }
+.option-copy strong { font-size: 1.0625rem; font-weight: var(--fw-strong); letter-spacing: -0.4px; }
+.option-copy small { color: var(--ink-mut); font-size: 0.6875rem; font-weight: var(--fw-regular); line-height: 1.5; }
 
 .bottom-actions {
   position: absolute;
