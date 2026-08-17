@@ -32,6 +32,7 @@
 import type {
   AnySessionContext, HospitalSessionContext, Recommendation
 } from "@kiobridge/participant-sdk";
+import { guardianRouteApplied } from "./recommend.ts";
 // 주의: @kiobridge/participant-sdk 에서 "값"을 import 하면 Node 24 기본 실행기(strip-only 모드)가
 // 이 패키지의 KioBridgeApiError 클래스(parameter property 문법)를 못 읽어 에러가 납니다.
 // (packages/ 는 플랫폼 파일이라 못 고침 — 그래서 여기선 리터럴 문자열로 대체합니다.)
@@ -112,7 +113,7 @@ export function explainRecommendation(_rec: Recommendation, _ctx: SessionContext
     reasons.push("말씀하신 진료과에 맞는 경로로 안내해 드렸습니다.");
   }
 
-  if (facts.guardianPresent === false) {
+  if (_rec.recommendedCandidateId && guardianRouteApplied.get(_rec.recommendedCandidateId)) {
     reasons.push("보호자 동행 없이 오셔서, 직원 도움을 받을 수 있는 경로를 우선으로 안내해 드렸습니다.");
   }
 

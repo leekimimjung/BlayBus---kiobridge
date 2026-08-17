@@ -85,6 +85,14 @@ function supportCoverageCount(wanted: string[], supportedOptionIds: string[]): n
 /** 참가팀 서비스가 수집한 원본 입력 (형식 자유 — 웹폼/음성/QR/챗봇 무엇이든). */
 export type RawUserInput = Record<string, unknown>;
 
+/**
+ * candidateId별로 "보호자 안전 가산점이 실제로 이 후보에 적용됐는가"를 기록해 둡니다
+ * (STEP6 explainRecommendation 이 "보호자 동행 없이 오셔서..." 문장을 실제로 그 이유일 때만
+ * 붙이도록 참고). Recommendation 스키마가 additionalProperties:false 라 반환값에 못 실어서,
+ * filterCandidates.ts의 exclusionReasons와 같은 방식(모듈 레벨 저장소)으로 STEP5→STEP6에 전달합니다.
+ */
+export const guardianRouteApplied = new Map<string, boolean>();
+
 const todo = (fn: string, what: string): never => {
   throw new Error(
     `NOT_IMPLEMENTED: ${fn}() 는 참가팀이 구현해야 합니다 — ${what}. ` +
@@ -104,6 +112,7 @@ export function recommend(_candidates: Candidate[], _ctx: SessionContext, _profi
   const scoreBreakdown: Record<string, number> = {};
   const excludedCandidates: Recommendation["excludedCandidates"] = [];
   const eligible: { candidate: Candidate; score: number }[] = [];
+  guardianRouteApplied.clear();
 
   for (const candidate of _candidates) {
     const supported = candidate.supportedOptions ?? {};
@@ -126,6 +135,7 @@ export function recommend(_candidates: Candidate[], _ctx: SessionContext, _profi
     // 페르소나별 if문이 아니라 데이터 구조 기반 판단.
     const isBroadStaffAssistRoute = !!candidate.attributes && !("visitType" in candidate.attributes);
     const guardianSafetyBonus = facts.guardianPresent === false && isBroadStaffAssistRoute ? 2 : 0;
+    guardianRouteApplied.set(candidate.candidateId, guardianSafetyBonus > 0);
 
     const score = supportScore + guardianSafetyBonus;
     scoreBreakdown[candidate.candidateId] = score;
