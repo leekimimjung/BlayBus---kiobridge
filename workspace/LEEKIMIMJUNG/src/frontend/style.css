@@ -9,13 +9,13 @@
   --fw-medium: 500;
   --fw-regular: 400;
   /* Figma 시안 토큰 (진료과 추천 · 진료과 안내) */
-  --brand: #005E90;
-  --brand-line: #3681A8;
+  --brand: #D6455E;
+  --brand-line: rgb(254 177 185 / 50%);
   --card-line: #DFE4E8;
   --ink: #13151A;
   --ink-sub: #3A3F47;
   --ink-mut: #697281;
-  --voice-bg: #E5F0F8;
+  --voice-bg: #FDE7EA;
   --acc-bg: #E5F8E6;
   --acc-ink: #1CA800;
   --staff: #C4432E;
@@ -85,8 +85,8 @@ button { font: inherit; }
   display: inline-flex;
   padding: 5px 8px;
   border-radius: 99px;
-  background: #e6f4fa;
-  color: #08749f;
+  background: #FDE7EA;
+  color: #D6455E;
   font-size: 0.5625rem;
   font-weight: var(--fw-strong);
 }
@@ -99,7 +99,7 @@ h1 {
   line-height: 1.24;
   letter-spacing: -1.3px;
 }
-h1 em { color: #0578a6; font-style: normal; }
+h1 em { color: #D6455E; font-style: normal; }
 .subtitle { margin: 0 0 22px; color: #7a858e; font-size: 0.625rem; }
 .section-label { display: block; margin: 24px 2px 0; color: #3a3f47; font-size: 0.6875rem; font-weight: var(--fw-strong); }
 
@@ -144,7 +144,7 @@ h1 em { color: #0578a6; font-style: normal; }
 /* 기기 내 접근성 설정 저장 (무로그인 QR 프로필) */
 .device-save-row { margin-top: 18px; display: grid; gap: 10px; }
 .device-save-row .secondary-action.wide { flex: 1; width: 100%; }
-.device-forget-note { margin: 0; color: #3681a8; font-size: 0.75rem; font-weight: var(--fw-strong); }
+.device-forget-note { margin: 0; color: rgb(254 177 185 / 50%); font-size: 0.75rem; font-weight: var(--fw-strong); }
 
 .options { display: grid; gap: 12px; margin-top: 28px; }
 .options.compact { gap: 14px; margin-top: 24px; }
@@ -162,7 +162,7 @@ h1 em { color: #0578a6; font-style: normal; }
   color: var(--ink);
   cursor: pointer;
 }
-.option-card.is-selected { border-color: var(--brand-line); box-shadow: 0 0 0 1px rgb(54 129 168 / 25%); }
+.option-card.is-selected { border-color: var(--brand-line); box-shadow: 0 0 0 1px rgb(254 177 185 / 45%); }
 .option-card:focus-visible { outline: 3px solid var(--brand-line); outline-offset: 2px; }
 .checkbox {
   flex: none;
@@ -178,7 +178,7 @@ h1 em { color: #0578a6; font-style: normal; }
   font-weight: var(--fw-strong);
 }
 .option-card[data-action="approve"] .checkbox { background: var(--acc-ink); }
-.option-card[data-action="pick-alternative"] .checkbox { background: var(--brand-line); }
+.option-card[data-action="pick-alternative"] .checkbox { background: #FEB1B9; }
 .option-card[data-action="reject"] .checkbox { background: var(--staff); }
 .is-selected .checkbox { background: var(--brand); }
 .option-copy { display: grid; gap: 4px; min-width: 0; }
@@ -235,7 +235,7 @@ h1 em { color: #0578a6; font-style: normal; }
 .staff-call:focus-visible { outline: 3px solid #7c1515; outline-offset: 2px; }
 
 .login-submit {
-  background: #4682B4;
+  background: #D6455E;
   height: 84px;
   border-radius: 16px;
   font-size: 1.5rem;
@@ -246,13 +246,13 @@ h1 em { color: #0578a6; font-style: normal; }
   border: 0;
   padding: 0;
   background: none;
-  color: #4682B4;
+  color: #D6455E;
   font: inherit;
   font-weight: var(--fw-strong);
   text-decoration: underline;
   cursor: pointer;
 }
-.link-like:focus-visible { outline: 3px solid #4682B4; outline-offset: 2px; border-radius: 4px; }
+.link-like:focus-visible { outline: 3px solid #D6455E; outline-offset: 2px; border-radius: 4px; }
 .auth-switch {
   margin: 0;
   text-align: center;
@@ -315,13 +315,13 @@ h1 em { color: #0578a6; font-style: normal; }
   height: 54px;
   border: 0;
   border-radius: 8px;
-  background: #0076a5;
+  background: #D6455E;
   color: #fff;
   font-size: 0.9375rem;
   font-weight: var(--fw-strong);
   cursor: pointer;
 }
-.staff-panel button:focus-visible { outline: 3px solid #045a7c; outline-offset: 2px; }
+.staff-panel button:focus-visible { outline: 3px solid #A6304A; outline-offset: 2px; }
 
 .info-card { margin-top: 25px; padding: 14px 16px; border: 1px solid #dce3e7; border-radius: 7px; background: #fff; }
 .info-card strong { font-size: 0.6875rem; }
@@ -376,7 +376,7 @@ h1 em { color: #0578a6; font-style: normal; }
   font-weight: var(--fw-strong);
   cursor: pointer;
 }
-.auth-panel .auth-login { color: #fff; background: #0072aa; }
+.auth-panel .auth-login { color: #fff; background: #D6455E; }
 .auth-panel .guest { color: #3a3f47; background: #dfe4e8; }
 
 .route-screen { padding-bottom: 105px; }
@@ -390,15 +390,15 @@ h1 em { color: #0578a6; font-style: normal; }
   background: #fff;
 }
 .map-grid { position: absolute; inset: 18px; opacity: .72; background: repeating-linear-gradient(90deg,#d4d5d4 0 1px,transparent 1px 58px), repeating-linear-gradient(0deg,#d4d5d4 0 1px,transparent 1px 47px); }
-.map-line { position: absolute; background: #148eb7; border-radius: 9px; }
+.map-line { position: absolute; background: #D6455E; border-radius: 9px; }
 .map-line-top-left { left: 68px; top: 88px; bottom: 60px; width: 3px; }
 .map-line-top-right { left: 105px; top: 62%; width: 190px; height: 5px; transform: rotate(-25deg); }
 .map-line-bottom-right { left: 100px; right: 95px; bottom: 44px; height: 3px; }
-.map-start { position: absolute; left: 65px; bottom: 28px; padding: 6px; border-radius: 5px; color: #fff; background: #148eb7; font-size: 0.5rem; text-align: center; }
+.map-start { position: absolute; left: 65px; bottom: 28px; padding: 6px; border-radius: 5px; color: #fff; background: #D6455E; font-size: 0.5rem; text-align: center; }
 .map-pin { position: absolute; width: 68px; height: 68px; padding: 5px; display: grid; place-content: center; border-radius: 50%; color: #fff; background: var(--brand); text-align: center; box-shadow: 0 4px 12px #7f8e95; }
 .map-pin small { display: block; font-size: 0.4375rem; line-height: 1.1; margin-bottom: 2px; overflow-wrap: break-word; }
 .map-pin strong { font-size: 0.9375rem; }
-.map-pin.is-target { width: 80px; height: 80px; background: #0a3350; box-shadow: 0 0 0 3px #fff, 0 4px 12px #7f8e95; }
+.map-pin.is-target { width: 80px; height: 80px; background: #A6304A; box-shadow: 0 0 0 3px #fff, 0 4px 12px #7f8e95; }
 .map-pin-top-left { left: 38px; top: 24px; }
 .map-pin-top-right { right: 16px; top: 24px; }
 .map-pin-bottom-right { right: 16px; bottom: 28px; }
@@ -429,7 +429,7 @@ h1 em { color: #0578a6; font-style: normal; }
 }
 
 .completion-screen { height: 100%; padding: clamp(160px, 26vh, 230px) 20px 100px; text-align: center; }
-.complete-icon { width: 96px; height: 96px; margin: auto; display: grid; place-items: center; border-radius: 50%; color: #fff; background: #0076a4; font-size: 3.75rem; font-weight: var(--fw-regular); }
+.complete-icon { width: 96px; height: 96px; margin: auto; display: grid; place-items: center; border-radius: 50%; color: #fff; background: #D6455E; font-size: 3.75rem; font-weight: var(--fw-regular); }
 .completion-screen h1 { margin-top: 22px; font-size: 1.625rem; }
 .completion-screen p { color: #7f888f; font-size: 0.625rem; line-height: 1.7; }
 
@@ -475,8 +475,8 @@ h1 em { color: #0578a6; font-style: normal; }
   cursor: pointer;
 }
 .confirm-no { border: 1.5px solid #dfe4e8; background: #f6f6f6; color: #222; }
-.confirm-yes { border: 1.5px solid #005e90; background: #005e90; color: #fff; }
-.confirm-close:focus-visible, .confirm-actions button:focus-visible { outline: 3px solid #045a7c; outline-offset: 2px; }
+.confirm-yes { border: 1.5px solid #D6455E; background: #D6455E; color: #fff; }
+.confirm-close:focus-visible, .confirm-actions button:focus-visible { outline: 3px solid #A6304A; outline-offset: 2px; }
 
 /* 진료 취소 화면 */
 .cancel-icon {
@@ -520,8 +520,8 @@ html.high-contrast .auto-return-note { color: #fff; }
   font-weight: var(--fw-strong);
   cursor: pointer;
 }
-.fontsize-chip.is-selected { border-color: #0072aa; }
-.fontsize-chip:focus-visible { outline: 3px solid #0072aa; outline-offset: 2px; }
+.fontsize-chip.is-selected { border-color: #D6455E; }
+.fontsize-chip:focus-visible { outline: 3px solid #D6455E; outline-offset: 2px; }
 .back-link {
   width: 42px;
   height: 42px;
@@ -534,7 +534,7 @@ html.high-contrast .auto-return-note { color: #fff; }
   line-height: 1;
   cursor: pointer;
 }
-.back-link:focus-visible { outline: 3px solid #0076a5; outline-offset: 2px; }
+.back-link:focus-visible { outline: 3px solid #D6455E; outline-offset: 2px; }
 /* "이전 페이지로 돌아가기" — pill 행 우측 밑줄 링크 (Figma 시안: 예약 화면 우상단) */
 .back-link-text {
   margin-left: auto;
@@ -565,7 +565,7 @@ html.high-contrast .auto-return-note { color: #fff; }
   cursor: pointer;
 }
 .login-field:hover { border-color: #bfd3dd; }
-.login-field:focus-visible { outline: 3px solid #0076a5; outline-offset: 2px; }
+.login-field:focus-visible { outline: 3px solid #D6455E; outline-offset: 2px; }
 .login-field-label { color: #7a858e; font-size: 0.625rem; font-weight: var(--fw-strong); }
 .login-field-value { font-size: 1.125rem; font-weight: var(--fw-strong); letter-spacing: .5px; }
 .login-field.is-empty .login-field-value { color: #aeb6bd; font-size: 0.8125rem; font-weight: var(--fw-regular); letter-spacing: 0; }
@@ -600,7 +600,7 @@ html.high-contrast .auto-return-note { color: #fff; }
   font-weight: var(--fw-medium);
   cursor: pointer;
 }
-.keypad-cancel:focus-visible { outline: 3px solid #0072aa; outline-offset: 2px; border-radius: 6px; }
+.keypad-cancel:focus-visible { outline: 3px solid #D6455E; outline-offset: 2px; border-radius: 6px; }
 .keypad-head { margin-top: 6px; }
 .keypad-head h1 {
   margin: 0;
@@ -620,7 +620,7 @@ html.high-contrast .auto-return-note { color: #fff; }
   letter-spacing: 4px;
   word-break: break-all;
 }
-.keypad-underline { height: 3px; margin-top: 10px; border-radius: 2px; background: #0072aa; }
+.keypad-underline { height: 3px; margin-top: 10px; border-radius: 2px; background: #D6455E; }
 .keypad-main {
   flex: 1;
   display: flex;
@@ -657,20 +657,20 @@ html.high-contrast .auto-return-note { color: #fff; }
   cursor: pointer;
 }
 .key-zero { min-width: 96px; }
-.key:focus-visible { outline: 3px solid #0072aa; outline-offset: 2px; z-index: 1; }
+.key:focus-visible { outline: 3px solid #D6455E; outline-offset: 2px; z-index: 1; }
 .key-fill { background: transparent; }
 .keypad-confirm {
   margin-top: 16px;
   height: 64px;
   border: 0;
   border-radius: 8px;
-  background: #0072aa;
+  background: #D6455E;
   color: #fff;
   font-size: 1.125rem;
   font-weight: var(--fw-strong);
   cursor: pointer;
 }
-.keypad-confirm:focus-visible { outline: 3px solid #045a7c; outline-offset: 2px; }
+.keypad-confirm:focus-visible { outline: 3px solid #A6304A; outline-offset: 2px; }
 
 /* ═══ Figma 시안 클래스 (진료과 추천 · 진료과 안내) ═══ */
 .pill-row { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 18px; }
@@ -697,7 +697,7 @@ html.high-contrast .auto-return-note { color: #fff; }
   display: grid;
   place-items: center;
   border-radius: 8px;
-  background: #EAF3F8;
+  background: #FDE7EA;
   color: var(--brand);
 }
 .directions li .dir-ico svg { width: 20px; height: 20px; }
@@ -720,20 +720,20 @@ html.high-contrast .auto-return-note { color: #fff; }
 .map-ico-help { left: 44px; top: 62%; }
 
 /* 공황장애(SIMPLE_STEPS) 모드 — 차분한 안내 */
-.pill-calm { background: #E6F2FF; color: #1E6FA8; }
-.calm-note { margin: 16px 0 0; color: #5C7A94; font-size: 0.8125rem; font-weight: var(--fw-regular); line-height: 1.7; letter-spacing: -0.2px; }
+.pill-calm { background: #FDE7EA; color: #D6455E; }
+.calm-note { margin: 16px 0 0; color: #94636F; font-size: 0.8125rem; font-weight: var(--fw-regular); line-height: 1.7; letter-spacing: -0.2px; }
 .rest-btn {
   flex: 1;
   height: 60px;
-  border: 2px solid #D9E3EA;
+  border: 2px solid #F5D5DA;
   border-radius: 12px;
   background: #fff;
-  color: #4A6A82;
+  color: #82525C;
   font-size: 1rem;
   font-weight: var(--fw-strong);
   cursor: pointer;
 }
-.rest-btn:focus-visible { outline: 3px solid #0072aa; outline-offset: 2px; }
+.rest-btn:focus-visible { outline: 3px solid #D6455E; outline-offset: 2px; }
 .bottom-actions.col .rest-btn { flex: 0 1 auto; width: 100%; }
 
 /* 잠시 쉬기 화면 */
@@ -743,7 +743,7 @@ html.high-contrast .auto-return-note { color: #fff; }
   height: 120px;
   margin: 0 auto 26px;
   border-radius: 50%;
-  background: radial-gradient(circle, #BFE0F2 0%, #EAF5FB 70%);
+  background: radial-gradient(circle, #FEB1B9 0%, #FDE7EA 70%);
   animation: breathe 8s ease-in-out infinite;
 }
 @keyframes breathe { 0%, 100% { transform: scale(0.8); opacity: .7; } 50% { transform: scale(1.15); opacity: 1; } }
@@ -759,7 +759,7 @@ html.high-contrast .auto-return-note { color: #fff; }
   font-weight: var(--fw-strong);
   cursor: pointer;
 }
-.staff-reassure { margin: 22px 0 0; color: #1E6FA8; font-size: 0.875rem; font-weight: var(--fw-strong); line-height: 1.7; }
+.staff-reassure { margin: 22px 0 0; color: #D6455E; font-size: 0.875rem; font-weight: var(--fw-strong); line-height: 1.7; }
 
 /* 전환 부드럽게 — 화면 간 갑작스러운 변화 없이 페이드 */
 html.simple-steps .screen { animation: calm-fade 0.45s ease; }
@@ -800,7 +800,7 @@ html.simple-steps .confirm-overlay { animation: calm-fade 0.3s ease; }
   color: var(--ink);
   cursor: pointer;
 }
-.dept-card.is-selected { border-color: var(--brand-line); box-shadow: 0 0 0 1px rgb(54 129 168 / 25%); }
+.dept-card.is-selected { border-color: var(--brand-line); box-shadow: 0 0 0 1px rgb(254 177 185 / 45%); }
 .dept-card:focus-visible { outline: 3px solid var(--brand-line); outline-offset: 2px; }
 .dept-copy { display: grid; gap: 4px; min-width: 0; }
 .dept-title { font-size: 1.0625rem; font-weight: var(--fw-strong); letter-spacing: -0.4px; }
@@ -835,7 +835,7 @@ html.simple-steps .confirm-overlay { animation: calm-fade 0.3s ease; }
 
 .fontsize-inline.block { margin-top: 16px; }
 .fontsize-chip { border-radius: 14px; }
-.fontsize-chip.is-selected { border-color: var(--brand); background: #EAF3F8; color: var(--brand); }
+.fontsize-chip.is-selected { border-color: var(--brand); background: #FDE7EA; color: var(--brand); }
 .fontsize-chip:focus-visible { outline: 3px solid var(--brand); outline-offset: 2px; }
 
 .staff-call.floating {
