@@ -140,7 +140,7 @@ const header = () => {
   const { date, time } = formatClock(new Date());
   return `
   <header class="status-bar">
-    <div class="brand"><span class="brand-mark">${heroMarkSvg}</span><strong>이김임정 병원</strong></div>
+    <div class="brand"><span class="brand-mark">${heroMarkSvg}</span><strong>은빛 병원</strong></div>
     <div class="clock"><small>${date}</small> <strong>${time}</strong></div>
   </header>`;
 };

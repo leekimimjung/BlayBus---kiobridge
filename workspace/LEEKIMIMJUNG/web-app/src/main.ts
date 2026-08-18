@@ -1,4 +1,4 @@
-// 이김임정 병원 무인 접수 안내 — 배포용 진입점.
+// 은빛 병원 무인 접수 안내 — 배포용 진입점.
 // STEP1(collectProfile)~STEP9(buildExecutionPlan)를 실제 소스 그대로 브라우저에서 실행합니다.
 // 외부 API 없이 동작하도록 hospital fixture를 정적으로 번들링해서 씁니다(순수 정적 사이트).
 import "../../src/frontend/style.css";
@@ -18,7 +18,7 @@ const TEAM_ID = "LEEKIMIMJUNG";
 function completionScreenHTML(approved: boolean): string {
   return `
   <header class="status-bar">
-    <div class="brand"><strong>이김임정 병원</strong></div>
+    <div class="brand"><strong>은빛 병원</strong></div>
   </header>
   <div class="page">
     <section class="screen form-screen cp-screen">

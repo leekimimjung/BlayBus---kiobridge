@@ -1,4 +1,4 @@
-# 이김임정 병원 무인 접수 안내 — 정적 빌드 후 nginx로 서빙.
+# 은빛 병원 무인 접수 안내 — 정적 빌드 후 nginx로 서빙.
 # 라즈베리파이(arm64)에서도 그대로 빌드/실행됩니다 (node/nginx 공식 이미지 모두 멀티아키텍처 지원).
 #
 # 🚨 web-app/src/main.ts가 ../../src/frontend/*.ts(workspace/LEEKIMIMJUNG/src)를 그대로 임포트하므로,
