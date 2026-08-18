@@ -43,25 +43,22 @@ throw new Error(
 // 어떻게: recommend에서 뺀 2~3순위 후보 ID만 배열로 반환 (제외된 후보는 다시 살리지 않기)
 // 참고 문서: docs/environments/HOSPITAL_PARTICIPANT_GUIDE.md, docs/ERROR_CATALOG.md
 export function buildAlternatives(_candidates: Candidate[], _rec: Recommendation): string[] {
-  const alternativeIds: string[] = [];
+  // recommend()가 이미 계산해 둔 정보를 그대로 씁니다 — 방문유형/예약여부/진료과가 안 맞는
+  // 후보(excludedCandidates)까지 대안으로 보여주면, 사용자가 뭘 골랐든 같은 후보만 계속
+  // 나오는 문제가 생깁니다(실사용 중 발견). scoreBreakdown으로 그중 더 맞는 순서로 정렬합니다.
+  const mismatchedIds = new Set((_rec.excludedCandidates ?? []).map((e) => e.candidateId));
+  const scoreBreakdown = _rec.scoreBreakdown ?? {};
 
-  for (const candidate of _candidates) {
-    if (!candidate) continue;
+  const alternatives = _candidates.filter((candidate) => {
+    if (!candidate) return false;
+    if (candidate.candidateId === _rec.recommendedCandidateId) return false;
+    if (exclusionReasons.has(candidate.candidateId)) return false;
+    if (candidate.available === false) return false;
+    if (mismatchedIds.has(candidate.candidateId)) return false;
+    return true;
+  });
 
-    if (candidate.candidateId === _rec.recommendedCandidateId) {
-      continue;
-    }
+  alternatives.sort((a, b) => (scoreBreakdown[b.candidateId] ?? 0) - (scoreBreakdown[a.candidateId] ?? 0));
 
-    if (exclusionReasons.has(candidate.candidateId)) {
-      continue;
-    }
-
-    if (candidate.available === false) {
-      continue;
-    }
-
-    alternativeIds.push(candidate.candidateId);
-  }
-
-  return alternativeIds.slice(0, 2);
+  return alternatives.slice(0, 2).map((c) => c.candidateId);
 }
