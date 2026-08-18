@@ -259,13 +259,29 @@ const heroMarkSvg = `
     <path d="M 205 60 L 250 40 L 250 260 L 205 260 L 205 180 L 95 180 L 95 135 L 205 135 Z" fill="var(--brand)" filter="url(#heroShadow)"/>
   </svg>`;
 
-/** 직원 호출 안내 오버레이 — 로그인 화면에서 "직원을 호출해주세요"를 누르면 표시됩니다. */
-export const staffAlertOverlayHTML = () => `
+/**
+ * 이 세션이 "내 폰으로 이어서 보기" QR을 스캔해서 열린 건지 확인합니다.
+ * 키오스크에서 그대로 쓰는 세션은 위치가 고정돼 있어 "직원이 온다"가 참이지만,
+ * QR로 폰에 옮겨 온 세션은 사용자가 어디 있는지 알 방법이 없어 같은 말이 거짓이 됩니다.
+ */
+function isViaQrSession(): boolean {
+  if (typeof window === "undefined") return false;
+  return new URLSearchParams(window.location.search).get("via") === "qr";
+}
+
+/**
+ * 직원 호출 안내 오버레이 — 로그인 화면에서 "직원을 호출해주세요"를 누르면 표시됩니다.
+ * viaQr=true(QR로 폰에 옮겨온 세션)면 "직원이 찾아온다"고 하지 않고, 위치가 고정된
+ * 안내데스크로 가시라고 안내합니다 — 실제로 지킬 수 있는 약속만 하기 위함입니다.
+ */
+export const staffAlertOverlayHTML = (viaQr = false) => `
   <div class="staff-overlay" role="dialog" aria-modal="true" aria-label="직원 호출 안내">
     <div class="staff-panel">
       <span class="staff-icon" aria-hidden="true">!</span>
-      <h2>직원을 호출했어요</h2>
-      <p>잠시만 기다려 주시면<br />직원이 도와드릴게요</p>
+      <h2>${viaQr ? "안내데스크로 가시면 도와드려요" : "직원을 호출했어요"}</h2>
+      <p>${viaQr
+        ? "가까운 1층 종합 안내데스크로 가시면<br />직원이 바로 도와드릴게요"
+        : "잠시만 기다려 주시면<br />직원이 도와드릴게요"}</p>
       <button type="button" data-action="staff-close" data-autofocus>확인</button>
     </div>
   </div>`;
@@ -587,11 +603,11 @@ async function renderLoginChoiceScreen(): Promise<{ loggedIn: boolean; auth: str
       const content = shell(
         mode === "MAIN" ? loginChoiceScreenHTML(siteQrImageDataUrl) : qrAuthScreenHTML(qrPayload, qrImageDataUrl, qrGenerating),
       );
-      renderWithScrollPreserved(mount, staffAlert ? `${content}${staffAlertOverlayHTML()}` : content);
+      renderWithScrollPreserved(mount, staffAlert ? `${content}${staffAlertOverlayHTML(isViaQrSession())}` : content);
       focusFirst(mount);
     };
     if (typeof window !== "undefined") {
-      void renderUrlQrCodeDataUrl(window.location.origin).then((dataUrl) => {
+      void renderUrlQrCodeDataUrl(`${window.location.origin}/?via=qr`).then((dataUrl) => {
         siteQrImageDataUrl = dataUrl;
         if (mode === "MAIN") draw();
       });
