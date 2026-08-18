@@ -143,7 +143,15 @@ h1 em { color: #FEB1B9; font-style: normal; }
 
 /* 기기 내 접근성 설정 저장 (무로그인 QR 프로필) */
 .device-save-row { margin-top: 18px; display: grid; gap: 10px; }
-.device-save-row .secondary-action.wide { flex: 1; width: 100%; }
+.device-save-row .secondary-action.wide {
+  flex: 1;
+  width: 100%;
+  height: 54px;
+  border-radius: 12px;
+  font-size: 0.875rem;
+  font-weight: var(--fw-strong);
+  cursor: pointer;
+}
 .device-forget-note { margin: 0; color: rgb(254 177 185 / 50%); font-size: 0.75rem; font-weight: var(--fw-strong); }
 
 .options { display: grid; gap: 12px; margin-top: 28px; }
@@ -571,7 +579,7 @@ html.high-contrast .auto-return-note { color: #fff; }
 .login-field.is-empty .login-field-value { color: #aeb6bd; font-size: 0.8125rem; font-weight: var(--fw-regular); letter-spacing: 0; }
 
 .bottom-actions.col { flex-direction: column; }
-.primary-action.is-disabled { background: #9db9c8; cursor: not-allowed; }
+.primary-action.is-disabled { background: #f3d3d7; color: #8a636a; cursor: not-allowed; }
 
 .keypad-overlay {
   position: absolute;
