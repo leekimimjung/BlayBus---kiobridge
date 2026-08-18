@@ -296,7 +296,7 @@ export function loginChoiceScreenHTML(siteQrImageDataUrl: string | null = null):
   return `
   <section class="screen welcome-screen">
     <div class="hero-mark" aria-hidden="true">${heroMarkSvg}</div>
-    <p class="camera-caption" tabindex="-1" data-autofocus>“안아프게 해 드릴게요”</p>
+    <p class="camera-caption">“안아프게 해 드릴게요”</p>
     ${siteQrImageDataUrl
       ? `<div class="site-qr">
           <img src="${siteQrImageDataUrl}" alt="이 화면을 내 폰으로 열기 위한 QR 코드" width="96" height="96" />
@@ -604,7 +604,10 @@ async function renderLoginChoiceScreen(): Promise<{ loggedIn: boolean; auth: str
         mode === "MAIN" ? loginChoiceScreenHTML(siteQrImageDataUrl) : qrAuthScreenHTML(qrPayload, qrImageDataUrl, qrGenerating),
       );
       renderWithScrollPreserved(mount, staffAlert ? `${content}${staffAlertOverlayHTML(isViaQrSession())}` : content);
-      focusFirst(mount);
+      // 첫 화면(로그인/회원가입 하기 · 비회원으로 시작하기)은 특정 버튼에 강조 포커스가
+      // 가면 아직 아무것도 안 골랐는데 뭔가 골라진 것처럼 보여서, 여기선 포커스를 옮기지
+      // 않습니다. QR 화면·직원 호출 오버레이처럼 실제 화면 전환이 있을 때만 옮깁니다.
+      if (mode !== "MAIN" || staffAlert) focusFirst(mount);
     };
     if (typeof window !== "undefined") {
       void renderUrlQrCodeDataUrl(`${window.location.origin}/?via=qr`).then((dataUrl) => {
