@@ -346,6 +346,18 @@ h1 em { color: #0578a6; font-style: normal; }
   display: block;
 }
 .camera-caption { margin-top: 14px; color: #000; font-size: 1.25rem; font-weight: var(--fw-medium); }
+.site-qr {
+  margin-top: 22px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  border: 1.5px solid #dce3e7;
+  border-radius: 12px;
+  background: #fff;
+}
+.site-qr img { width: 56px; height: 56px; display: block; flex: none; }
+.site-qr-caption { margin: 0; color: #3a3f47; font-size: 0.6875rem; line-height: 1.5; text-align: left; }
 .auth-panel {
   position: absolute;
   left: 28px;
@@ -882,6 +894,8 @@ html.high-contrast .qr-subtitle { color: #fff; }
 html.high-contrast .qr-box { background: #fff; border: 1.5px solid #fff; color: #000; }
 html.high-contrast .qr-payload { background: #000; color: #fff; border: 1.5px solid #fff; }
 html.high-contrast .qr-note, html.high-contrast .device-forget-note { color: #fff; }
+html.high-contrast .site-qr { background: #fff; border: 1.5px solid #fff; }
+html.high-contrast .site-qr-caption { color: #000; }
 
 html.high-contrast .option-card, html.high-contrast .q-card, html.high-contrast .info-card,
 html.high-contrast .dept-card, html.high-contrast .login-field, html.high-contrast .back-link,

@@ -98,3 +98,14 @@ export async function renderMockQrCodeDataUrl(payload: MockQrPayload): Promise<s
   const QRCode = await import("qrcode");
   return QRCode.toDataURL(JSON.stringify(payload), { margin: 1, width: 220 }) as Promise<string>;
 }
+
+/**
+ * 순수 URL을 실제로 스캔 가능한 QR 코드 이미지(PNG data URL)로 그립니다.
+ * "다른 기기(폰)로 이어서 보기" 용 — 이 사이트 자체 주소를 인코딩합니다.
+ * 완전 정적 사이트라 어느 기기에서 열어도 똑같이 동작하는 걸 그대로 이용하는 것뿐입니다.
+ */
+export async function renderUrlQrCodeDataUrl(url: string): Promise<string> {
+  // @ts-ignore — qrcode는 web-app의 브라우저 전용 의존성이라 워크스페이스 tsc 경로엔 타입이 없습니다.
+  const QRCode = await import("qrcode");
+  return QRCode.toDataURL(url, { margin: 1, width: 220 }) as Promise<string>;
+}

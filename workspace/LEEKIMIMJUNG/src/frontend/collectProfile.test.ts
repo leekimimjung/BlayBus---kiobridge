@@ -75,6 +75,22 @@ test("renderMockQrCodeDataUrl: payload를 실제로 스캔 가능한 PNG data UR
   assert.match(dataUrl, /^data:image\/png;base64,/);
 });
 
+test("renderUrlQrCodeDataUrl: 사이트 주소를 실제로 스캔 가능한 PNG data URL QR 코드로 그린다", async () => {
+  const { renderUrlQrCodeDataUrl } = await import("./deviceProfile.ts");
+  const dataUrl = await renderUrlQrCodeDataUrl("https://leekimimjung.bssm.dev");
+  assert.match(dataUrl, /^data:image\/png;base64,/);
+});
+
+test("메인 화면: '다른 기기로 이어서 보기' QR을 넘기면 이미지와 안내 문구를 보여주고, 안 넘기면 아예 안 보인다", () => {
+  const withQr = loginChoiceScreenHTML("data:image/png;base64,xyz");
+  assert.match(withQr, /site-qr/);
+  assert.match(withQr, /내 폰으로 이어서 보시려면/);
+  assert.match(withQr, /data:image\/png;base64,xyz/);
+
+  const withoutQr = loginChoiceScreenHTML();
+  assert.doesNotMatch(withoutQr, /site-qr/);
+});
+
 test("Mock QR 페이로드: 환경 ID·fixture 버전·일회용 nonce만 담고 개인정보는 없다", () => {
   const payload = buildMockQrPayload();
   assert.equal(payload.environmentId, "hospital");

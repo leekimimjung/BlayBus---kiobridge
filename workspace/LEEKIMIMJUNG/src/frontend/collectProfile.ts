@@ -50,6 +50,7 @@ export {
 /** 무로그인 QR 프로필 — docs/LOGINLESS_QR_PROFILE_GUIDE.md. Mock QR + 기기 내 접근성 설정 저장/조회/삭제. */
 import {
   buildMockQrPayload, loadDeviceProfile, saveDeviceProfile, clearDeviceProfile, renderMockQrCodeDataUrl,
+  renderUrlQrCodeDataUrl,
 } from "./deviceProfile.ts";
 import type { MockQrPayload, StoredDeviceProfile } from "./deviceProfile.ts";
 export { buildMockQrPayload, loadDeviceProfile, saveDeviceProfile, clearDeviceProfile, renderMockQrCodeDataUrl };
@@ -269,12 +270,23 @@ export const staffAlertOverlayHTML = () => `
     </div>
   </div>`;
 
-/** 메인 화면 — 병원 이니셜(H) + "안아프게 해 드릴게요" 문구. Figma 시안 느낌 적용. */
-export function loginChoiceScreenHTML(): string {
+/**
+ * 메인 화면 — 병원 이니셜(H) + "안아프게 해 드릴게요" 문구. Figma 시안 느낌 적용.
+ * siteQrImageDataUrl이 있으면 "다른 기기(폰)로 이어서 보기" QR도 함께 보여줍니다 —
+ * 완전 정적 사이트라 이 화면이 열려 있는 기기(키오스크든 폰이든)와 무관하게 동일하게 동작하는
+ * 점을 그대로 활용한 것입니다. 새 세션으로 열리며, 진행 중이던 화면이 이어지진 않습니다.
+ */
+export function loginChoiceScreenHTML(siteQrImageDataUrl: string | null = null): string {
   return `
   <section class="screen welcome-screen">
     <div class="hero-mark" aria-hidden="true">${heroMarkSvg}</div>
     <p class="camera-caption">“안아프게 해 드릴게요”</p>
+    ${siteQrImageDataUrl
+      ? `<div class="site-qr">
+          <img src="${siteQrImageDataUrl}" alt="이 화면을 내 폰으로 열기 위한 QR 코드" width="96" height="96" />
+          <p class="site-qr-caption">내 폰으로 이어서 보시려면<br />QR을 스캔해 주세요</p>
+        </div>`
+      : ""}
     <div class="auth-panel">
       <button type="button" class="auth-login" data-choice="auth">로그인 / 회원가입 하기</button>
       <button type="button" class="guest" data-choice="guest">비회원으로 시작하기</button>
@@ -569,14 +581,21 @@ async function renderLoginChoiceScreen(): Promise<{ loggedIn: boolean; auth: str
   let qrPayload: MockQrPayload | null = null;
   let qrImageDataUrl: string | null = null;
   let qrGenerating = false;
+  let siteQrImageDataUrl: string | null = null;
   return new Promise((resolve) => {
     const draw = () => {
       const content = shell(
-        mode === "MAIN" ? loginChoiceScreenHTML() : qrAuthScreenHTML(qrPayload, qrImageDataUrl, qrGenerating),
+        mode === "MAIN" ? loginChoiceScreenHTML(siteQrImageDataUrl) : qrAuthScreenHTML(qrPayload, qrImageDataUrl, qrGenerating),
       );
       renderWithScrollPreserved(mount, staffAlert ? `${content}${staffAlertOverlayHTML()}` : content);
       focusFirst(mount);
     };
+    if (typeof window !== "undefined") {
+      void renderUrlQrCodeDataUrl(window.location.origin).then((dataUrl) => {
+        siteQrImageDataUrl = dataUrl;
+        if (mode === "MAIN") draw();
+      });
+    }
     function onClick(event: MouseEvent) {
       const btn = closestButton(event.target);
       if (!btn) return;
