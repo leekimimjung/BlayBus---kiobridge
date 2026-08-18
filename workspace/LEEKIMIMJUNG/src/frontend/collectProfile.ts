@@ -296,7 +296,7 @@ export function loginChoiceScreenHTML(siteQrImageDataUrl: string | null = null):
   return `
   <section class="screen welcome-screen">
     <div class="hero-mark" aria-hidden="true">${heroMarkSvg}</div>
-    <p class="camera-caption">“안아프게 해 드릴게요”</p>
+    <p class="camera-caption" tabindex="-1" data-autofocus>“안아프게 해 드릴게요”</p>
     ${siteQrImageDataUrl
       ? `<div class="site-qr">
           <img src="${siteQrImageDataUrl}" alt="이 화면을 내 폰으로 열기 위한 QR 코드" width="96" height="96" />
