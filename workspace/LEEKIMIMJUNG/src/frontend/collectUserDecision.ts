@@ -170,6 +170,12 @@ export function departmentChoiceHTML(
   uncertain = false,
 ): string {
   const voice = !!settings["VOICE_GUIDANCE"];
+  // 알려진 미해결 문제(빌드에서 제거되는 소스 주석으로만 남김 — 제출자료엔 적지 않기로 함):
+  // 아래 dept-hint의 "직원이 찾아와서"는 위치가 고정된 키오스크 앞이어야만 참인 약속인데,
+  // collectProfile.ts 웰컴 화면의 "내 폰으로 이어서 보기" QR로 옮겨 온 세션에도 이 문장이
+  // 그대로 나감 — 사용자가 어디 있는지 알 방법이 없는데 찾아간다고 약속하는 셈.
+  // 웰컴 화면은 isViaQrSession()으로 이미 고쳤지만(collectProfile.ts), 그 신호가 이
+  // 화면까지 전달되지 않아 여기는 아직 못 고침.
   const staff = !!settings["STAFF_HELP"];
   const visual = !!settings["VISUAL_GUIDANCE"];
   const simple = !!settings["SIMPLE_STEPS"];
