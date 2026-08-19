@@ -384,7 +384,7 @@ h1 em { color: #FEB1B9; font-style: normal; }
   font-weight: var(--fw-strong);
   cursor: pointer;
 }
-.auth-panel .auth-login { color: #fff; background: #FEB1B9; }
+.auth-panel .auth-login { color: var(--ink); background: #FEB1B9; }
 .auth-panel .guest { color: #3a3f47; background: #dfe4e8; }
 
 .route-screen { padding-bottom: 105px; }
