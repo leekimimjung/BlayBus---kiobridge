@@ -42,6 +42,14 @@ button { font: inherit; }
   box-shadow: 0 0 30px rgb(0 0 0 / 24%);
   transition: background-color 0.3s ease;
 }
+/* 모바일 세로모드에서는 카드처럼 보이는 여백·그림자를 없애고 화면을 꽉 채웁니다. */
+@media (max-width: 480px) {
+  .app-shell {
+    max-width: 100%;
+    min-height: 100dvh;
+    box-shadow: none;
+  }
+}
 
 /* 고대비 모드 켜고 끌 때 색이 갑자기 뒤집히지 않고 부드럽게 전환되도록 */
 .app-shell, .app-shell *,
